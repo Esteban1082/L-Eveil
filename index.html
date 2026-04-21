@@ -370,6 +370,39 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 .ro-sub{font-size:.75rem;color:var(--m);margin-top:.15rem;}
 
 /* Lightbox */
+
+/* ── ADMIN ── */
+.report-card{padding:1rem 1.25rem;border-bottom:1px solid var(--b);transition:background .15s;}
+.report-card:hover{background:var(--sh);}
+.rc-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap;}
+.rc-type{font-size:.68rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:.15rem .55rem;border-radius:50px;}
+.rc-type-forum_post{background:rgba(155,126,200,.12);color:var(--a);}
+.rc-type-comment{background:rgba(201,169,110,.12);color:var(--gold);}
+.rc-type-profile{background:rgba(212,137,154,.12);color:var(--rose);}
+.rc-status{font-size:.68rem;padding:.15rem .55rem;border-radius:50px;margin-left:auto;}
+.rc-status-pending{background:rgba(224,90,106,.12);color:var(--red);}
+.rc-status-resolved{background:rgba(125,184,164,.12);color:var(--mint);}
+.rc-status-dismissed{background:var(--sa);color:var(--fa);}
+.rc-reason{font-size:.85rem;font-weight:500;color:var(--t);margin-bottom:.25rem;}
+.rc-details{font-size:.8rem;color:var(--m);margin-bottom:.5rem;font-style:italic;}
+.rc-content-preview{font-size:.8rem;color:var(--m);background:var(--sa);border-radius:8px;padding:.5rem .75rem;margin-bottom:.6rem;border-left:3px solid var(--b);}
+.rc-meta{font-size:.72rem;color:var(--fa);margin-bottom:.6rem;}
+.rc-actions{display:flex;gap:.5rem;flex-wrap:wrap;}
+.rc-btn{font-size:.75rem;padding:.32rem .8rem;border-radius:50px;border:1px solid var(--b);background:transparent;color:var(--m);cursor:pointer;transition:all .2s;}
+.rc-btn:hover{border-color:var(--a);color:var(--a);}
+.rc-btn.danger{border-color:rgba(224,90,106,.3);color:var(--red);}
+.rc-btn.danger:hover{background:rgba(224,90,106,.1);}
+.rc-btn.success{border-color:rgba(125,184,164,.3);color:var(--mint);}
+.rc-btn.success:hover{background:rgba(125,184,164,.1);}
+.admin-user-row{display:flex;align-items:center;gap:.75rem;padding:.85rem 1.25rem;border-bottom:1px solid var(--b);transition:background .15s;}
+.admin-user-row:hover{background:var(--sh);}
+.aru-info{flex:1;min-width:0;}
+.aru-name{font-size:.86rem;font-weight:500;color:var(--t);}
+.aru-role{font-size:.72rem;color:var(--m);}
+.aru-actions{display:flex;gap:.4rem;}
+.role-select{font-size:.75rem;padding:.28rem .6rem;border-radius:8px;border:1px solid var(--b);background:var(--sa);color:var(--t);cursor:pointer;outline:none;}
+.role-select:focus{border-color:var(--a);}
+
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:2000;display:none;align-items:center;justify-content:center;cursor:pointer;}
 .lightbox.open{display:flex;animation:fadein .2s;}
 .lightbox img{max-width:92vw;max-height:88vh;object-fit:contain;border-radius:8px;}
@@ -406,6 +439,7 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
     <button class="ni" data-view="journal" data-auth="1"><span class="ni-icon">📖</span><span class="ni-label">Journal Onirique</span></button>
     <button class="ni" data-view="biblio"><span class="ni-icon">📚</span><span class="ni-label">Bibliothèque</span></button>
     <button class="ni" data-view="saved" data-auth="1"><span class="ni-icon">🔖</span><span class="ni-label">Enregistrés</span></button>
+    <button class="ni hidden" id="nav-admin" data-view="admin" data-auth="1"><span class="ni-icon">&#x1F6E1;</span><span class="ni-label">Modération</span><span class="ni-badge hidden" id="reports-count">0</span></button>
   </nav>
   <button class="btn-post" id="btn-post-main">✦ Publier</button>
   <div class="nav-sep" style="margin:.5rem;"></div>
@@ -617,6 +651,34 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
     <div id="saved-feed"><div class="floader">Chargement…</div></div>
   </div>
 
+  <!-- ADMIN / MODÉRATION -->
+  <div class="view" id="view-admin">
+    <div class="sticky-hdr">
+      <div class="fhdr-row">
+        <button class="back-btn" id="btn-admin-back">←</button>
+        <div class="fhdr-title">Modération</div>
+        <div style="display:flex;gap:.5rem;">
+          <button class="htag-clr" id="btn-admin-filter-all" style="font-weight:500;">Tous</button>
+          <button class="htag-clr" id="btn-admin-filter-pending">En attente</button>
+        </div>
+      </div>
+      <div class="ftabs">
+        <button class="ftab active" data-rtab="reports">Signalements</button>
+        <button class="ftab" data-rtab="users">Utilisateurs</button>
+      </div>
+    </div>
+    <div id="admin-reports-view">
+      <div id="admin-reports-list"><div class="floader">Chargement…</div></div>
+    </div>
+    <div id="admin-users-view" class="hidden">
+      <div style="padding:.75rem 1.25rem;border-bottom:1px solid var(--b);">
+        <input type="text" id="admin-user-search" placeholder="Chercher un pseudo…" style="width:100%;padding:.6rem .85rem;border-radius:10px;border:1px solid var(--b);background:var(--sa);font-family:var(--f);font-size:.85rem;color:var(--t);outline:none;"/>
+      </div>
+      <div id="admin-users-list"><div class="floader">Chargement…</div></div>
+    </div>
+  </div>
+
+
 </main>
 
 <!-- ════ SIDEBAR DROITE ════ -->
@@ -805,6 +867,7 @@ function showView(id){
   if(id==='saved')loadSaved();
   if(id==='journal')loadJournal();
   if(id==='biblio'){showBiblioList();loadBiblio();}
+  if(id==='admin'){if(ADMIN_TAB==='reports')loadAdminReports();else loadAdminUsers();}
 }
 
 // ── AUTH ──
@@ -832,7 +895,7 @@ async function onLogin(user){
   document.getElementById('dcomposer-wrap').style.display='block';
   document.getElementById('drawer-cta').style.display='none';
   await Promise.all([loadLiked(),loadSavedIds(),loadReposted(),loadLikedCmts(),loadFollowing()]);
-  checkUnreadNotifs();loadFeed();
+  checkUnreadNotifs();checkAdminRole();loadFeed();
 }
 function onLogout(){
   ME=null;MY_PSEUDO='';MY_ID=null;MY_AVATAR=null;
@@ -1664,6 +1727,250 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function timeAgo(d){const s=(Date.now()-new Date(d))/1000;if(s<60)return'à l\'instant';if(s<3600)return`il y a ${Math.floor(s/60)} min`;if(s<86400)return`il y a ${Math.floor(s/3600)}h`;return`il y a ${Math.floor(s/86400)}j`;}
 let toastTm;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTm);toastTm=setTimeout(()=>t.classList.remove('show'),2800);}
+
+
+// ═══════════════════════════════════════════
+// ── ADMIN / MODÉRATION ──
+// ═══════════════════════════════════════════
+let MY_ROLE = 'user';
+let ADMIN_TAB = 'reports';
+let ADMIN_FILTER = 'all'; // 'all' | 'pending'
+let ADMIN_USER_TIMER = null;
+
+async function checkAdminRole() {
+  if (!ME) return;
+  const { data } = await db.from('profiles').select('role').eq('id', ME.id).single();
+  MY_ROLE = data?.role || 'user';
+  const navAdmin = document.getElementById('nav-admin');
+  if (MY_ROLE === 'admin' || MY_ROLE === 'modo') {
+    navAdmin.classList.remove('hidden');
+    checkPendingReports();
+  } else {
+    navAdmin.classList.add('hidden');
+  }
+}
+
+async function checkPendingReports() {
+  if (MY_ROLE !== 'admin' && MY_ROLE !== 'modo') return;
+  const { count } = await db.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+  const badge = document.getElementById('reports-count');
+  if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.classList.remove('hidden'); }
+  else badge.classList.add('hidden');
+}
+
+// ── REPORTS ──
+async function loadAdminReports() {
+  const list = document.getElementById('admin-reports-list');
+  list.innerHTML = '<div class="floader">Chargement…</div>';
+  let q = db.from('reports')
+    .select('*, reporter:profiles!reports_reporter_id_fkey(pseudo)')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (ADMIN_FILTER === 'pending') q = q.eq('status', 'pending');
+  const { data, error } = await q;
+  list.innerHTML = '';
+  if (error || !data || data.length === 0) {
+    list.innerHTML = `<div class="fempty">${ADMIN_FILTER === 'pending' ? 'Aucun signalement en attente 🎉' : 'Aucun signalement.'}</div>`;
+    return;
+  }
+  data.forEach(r => list.appendChild(makeReportCard(r)));
+}
+
+function makeReportCard(r) {
+  const el = document.createElement('div');
+  el.className = 'report-card';
+  const typeLabels = { forum_post: 'Post', comment: 'Commentaire', profile: 'Profil' };
+  const reasonLabels = { spam: '🚫 Spam', harcelement: '⚠️ Harcèlement', haine: '🛑 Contenu haineux', desinformation: '❌ Désinformation', autre: '💬 Autre' };
+  const statusLabels = { pending: 'En attente', reviewed: 'Examiné', resolved: 'Résolu', dismissed: 'Ignoré' };
+
+  const header = document.createElement('div');
+  header.className = 'rc-header';
+  header.innerHTML = `
+    <span class="rc-type rc-type-${r.target_type}">${typeLabels[r.target_type] || r.target_type}</span>
+    <span class="rc-reason">${reasonLabels[r.reason] || r.reason}</span>
+    <span class="rc-status rc-status-${r.status}">${statusLabels[r.status] || r.status}</span>`;
+
+  const meta = document.createElement('div');
+  meta.className = 'rc-meta';
+  meta.textContent = `Signalé par ${r.reporter?.pseudo || 'Anonyme'} · ${timeAgo(r.created_at)} · ID cible : ${r.target_id.slice(0, 8)}…`;
+
+  const body = document.createElement('div');
+  if (r.details) {
+    const details = document.createElement('div');
+    details.className = 'rc-details';
+    details.textContent = `"${r.details}"`;
+    body.appendChild(details);
+  }
+
+  // Charger le contenu ciblé
+  const preview = document.createElement('div');
+  preview.className = 'rc-content-preview';
+  preview.textContent = 'Chargement du contenu…';
+  loadReportTarget(r, preview);
+
+  const acts = document.createElement('div');
+  acts.className = 'rc-actions';
+
+  if (r.status === 'pending') {
+    const btnReview = document.createElement('button');
+    btnReview.className = 'rc-btn';
+    btnReview.textContent = '👁️ Marquer examiné';
+    btnReview.addEventListener('click', () => updateReportStatus(r.id, 'reviewed', el));
+
+    const btnResolve = document.createElement('button');
+    btnResolve.className = 'rc-btn success';
+    btnResolve.textContent = '✓ Résoudre';
+    btnResolve.addEventListener('click', () => updateReportStatus(r.id, 'resolved', el));
+
+    const btnDismiss = document.createElement('button');
+    btnDismiss.className = 'rc-btn';
+    btnDismiss.textContent = '✕ Ignorer';
+    btnDismiss.addEventListener('click', () => updateReportStatus(r.id, 'dismissed', el));
+
+    const btnDelete = document.createElement('button');
+    btnDelete.className = 'rc-btn danger';
+    btnDelete.textContent = '🗑️ Supprimer le contenu';
+    btnDelete.addEventListener('click', () => deleteReportedContent(r, el));
+
+    acts.append(btnReview, btnResolve, btnDismiss, btnDelete);
+  }
+
+  // Bouton voir le post
+  if (r.target_type === 'forum_post') {
+    const btnGo = document.createElement('button');
+    btnGo.className = 'rc-btn';
+    btnGo.textContent = '→ Voir le post';
+    btnGo.addEventListener('click', () => goToPost(r.target_id));
+    acts.appendChild(btnGo);
+  }
+
+  el.append(header, meta, body, preview, acts);
+  return el;
+}
+
+async function loadReportTarget(r, previewEl) {
+  try {
+    if (r.target_type === 'forum_post') {
+      const { data } = await db.from('forum_posts').select('content, profiles(pseudo)').eq('id', r.target_id).single();
+      if (data) previewEl.innerHTML = `<strong>@${esc(data.profiles?.pseudo || '?')}</strong> : ${esc((data.content || '').slice(0, 200))}${data.content?.length > 200 ? '…' : ''}`;
+      else previewEl.textContent = 'Contenu introuvable (peut-être déjà supprimé).';
+    } else if (r.target_type === 'comment') {
+      const { data } = await db.from('comments').select('content, profiles(pseudo)').eq('id', r.target_id).single();
+      if (data) previewEl.innerHTML = `<strong>@${esc(data.profiles?.pseudo || '?')}</strong> : ${esc((data.content || '').slice(0, 200))}`;
+      else previewEl.textContent = 'Commentaire introuvable.';
+    } else if (r.target_type === 'profile') {
+      const { data } = await db.from('profiles').select('pseudo, bio').eq('id', r.target_id).single();
+      if (data) previewEl.innerHTML = `<strong>@${esc(data.pseudo)}</strong>${data.bio ? ' : ' + esc(data.bio.slice(0, 150)) : ''}`;
+      else previewEl.textContent = 'Profil introuvable.';
+    }
+  } catch (e) { previewEl.textContent = 'Impossible de charger le contenu.'; }
+}
+
+async function updateReportStatus(reportId, status, cardEl) {
+  const { error } = await db.from('reports').update({ status }).eq('id', reportId);
+  if (error) { showToast('Erreur : ' + error.message); return; }
+  // Mettre à jour l'UI sans recharger
+  const statusEl = cardEl.querySelector('.rc-status');
+  const labels = { reviewed: 'Examiné', resolved: 'Résolu', dismissed: 'Ignoré' };
+  if (statusEl) { statusEl.textContent = labels[status] || status; statusEl.className = `rc-status rc-status-${status}`; }
+  cardEl.querySelector('.rc-actions').innerHTML = `<span style="font-size:.78rem;color:var(--mint);">✓ ${labels[status]}</span>`;
+  checkPendingReports();
+  showToast('✓ Statut mis à jour');
+}
+
+async function deleteReportedContent(r, cardEl) {
+  if (!confirm('Supprimer définitivement ce contenu ?')) return;
+  let error;
+  if (r.target_type === 'forum_post') {
+    ({ error } = await db.from('forum_posts').update({ is_deleted: true }).eq('id', r.target_id));
+  } else if (r.target_type === 'comment') {
+    ({ error } = await db.from('comments').update({ is_deleted: true }).eq('id', r.target_id));
+  }
+  if (error) { showToast('Erreur : ' + error.message); return; }
+  await db.from('reports').update({ status: 'resolved' }).eq('id', r.id);
+  cardEl.style.opacity = '0'; cardEl.style.transition = 'opacity .3s'; setTimeout(() => cardEl.remove(), 300);
+  checkPendingReports();
+  showToast('🗑️ Contenu supprimé et signalement résolu');
+}
+
+// ── GESTION UTILISATEURS ──
+async function loadAdminUsers(query = '') {
+  const list = document.getElementById('admin-users-list');
+  list.innerHTML = '<div class="floader">Chargement…</div>';
+  let q = db.from('profiles').select('id, pseudo, role_badge, role, avatar_url').order('created_at', { ascending: false }).limit(50);
+  if (query) q = q.ilike('pseudo', `%${query}%`);
+  const { data, error } = await q;
+  list.innerHTML = '';
+  if (error || !data || data.length === 0) { list.innerHTML = '<div class="fempty">Aucun utilisateur.</div>'; return; }
+  data.forEach(u => list.appendChild(makeAdminUserRow(u)));
+}
+
+function makeAdminUserRow(u) {
+  const el = document.createElement('div');
+  el.className = 'admin-user-row';
+  const av = document.createElement('div');
+  av.className = 'av sm'; av.style.cursor = 'pointer';
+  setAvEl(av, u.avatar_url, u.pseudo);
+  av.addEventListener('click', () => loadProfile(u.id));
+  const info = document.createElement('div');
+  info.className = 'aru-info';
+  info.innerHTML = `<div class="aru-name">${esc(u.pseudo)}</div><div class="aru-role">${esc(u.role_badge || '🌙 Novice')} · <em>${esc(u.role || 'user')}</em></div>`;
+  const acts = document.createElement('div');
+  acts.className = 'aru-actions';
+
+  // Changement de rôle (admin seulement)
+  if (MY_ROLE === 'admin' && u.id !== ME.id) {
+    const select = document.createElement('select');
+    select.className = 'role-select';
+    ['user', 'modo', 'admin'].forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r; opt.textContent = r;
+      if (r === u.role) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', async () => {
+      const { error } = await db.from('profiles').update({ role: select.value }).eq('id', u.id);
+      if (error) { showToast('Erreur : ' + error.message); select.value = u.role; }
+      else { showToast(`✓ ${u.pseudo} → ${select.value}`); info.querySelector('em').textContent = select.value; }
+    });
+    acts.appendChild(select);
+  }
+
+  el.append(av, info, acts);
+  return el;
+}
+
+// ── EVENT LISTENERS ADMIN ──
+document.getElementById('btn-admin-back').addEventListener('click', () => showView('feed'));
+document.querySelectorAll('.ftab[data-rtab]').forEach(t => {
+  t.addEventListener('click', () => {
+    ADMIN_TAB = t.dataset.rtab;
+    document.querySelectorAll('.ftab[data-rtab]').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('admin-reports-view').classList.toggle('hidden', ADMIN_TAB !== 'reports');
+    document.getElementById('admin-users-view').classList.toggle('hidden', ADMIN_TAB !== 'users');
+    if (ADMIN_TAB === 'reports') loadAdminReports();
+    else loadAdminUsers();
+  });
+});
+
+document.getElementById('btn-admin-filter-all').addEventListener('click', () => {
+  ADMIN_FILTER = 'all';
+  document.getElementById('btn-admin-filter-all').style.fontWeight = '500';
+  document.getElementById('btn-admin-filter-pending').style.fontWeight = '400';
+  loadAdminReports();
+});
+document.getElementById('btn-admin-filter-pending').addEventListener('click', () => {
+  ADMIN_FILTER = 'pending';
+  document.getElementById('btn-admin-filter-all').style.fontWeight = '400';
+  document.getElementById('btn-admin-filter-pending').style.fontWeight = '500';
+  loadAdminReports();
+});
+
+document.getElementById('admin-user-search').addEventListener('input', e => {
+  clearTimeout(ADMIN_USER_TIMER);
+  ADMIN_USER_TIMER = setTimeout(() => loadAdminUsers(e.target.value.trim()), 380);
+});
 
 initTheme();showTrending();initAuth();loadFeed();
 </script>
