@@ -371,6 +371,29 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 
 /* Lightbox */
 
+
+/* ── POST DETAIL (vue Twitter-like) ── */
+.postdetail-post{padding:1.25rem;border-bottom:1px solid var(--b);}
+.postdetail-post .pname{font-size:1rem;}
+.postdetail-post .pcontent{font-size:1rem;line-height:1.75;margin-bottom:.75rem;}
+.postdetail-post .post-img{max-height:500px;}
+.postdetail-stats{display:flex;gap:1.25rem;padding:.75rem 0;border-top:1px solid var(--b);border-bottom:1px solid var(--b);margin-bottom:.15rem;}
+.pds-item{font-size:.85rem;color:var(--m);}<br>.pds-item strong{color:var(--t);font-weight:500;}
+.postdetail-actions{display:flex;gap:.5rem;padding:.6rem 0;border-bottom:1px solid var(--b);}
+.postdetail-actions .pa{font-size:.82rem;padding:.4rem .75rem;}
+.inline-comment{display:flex;gap:.65rem;padding:.85rem 1.25rem;border-bottom:1px solid var(--b);transition:background .15s;}
+.inline-comment:hover{background:var(--sh);}
+.ic-body{flex:1;min-width:0;}
+.ic-head{display:flex;align-items:center;gap:.4rem;margin-bottom:.28rem;flex-wrap:wrap;}
+.ic-name{font-size:.84rem;font-weight:500;color:var(--t);cursor:pointer;}
+.ic-name:hover{color:var(--a);}
+.ic-time{font-size:.72rem;color:var(--fa);margin-left:auto;}
+.ic-content{font-size:.87rem;line-height:1.65;color:var(--t);word-break:break-word;margin-bottom:.5rem;}
+.ic-content .ht{color:var(--a);cursor:pointer;font-weight:500;}
+.ic-content .ht:hover{text-decoration:underline;}
+.ic-img{width:100%;max-height:200px;object-fit:cover;border-radius:10px;display:block;margin-bottom:.5rem;cursor:pointer;}
+.ic-actions{display:flex;gap:.3rem;}
+
 /* ── ADMIN ── */
 .report-card{padding:1rem 1.25rem;border-bottom:1px solid var(--b);transition:background .15s;}
 .report-card:hover{background:var(--sh);}
@@ -678,6 +701,30 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
     </div>
   </div>
 
+
+  <!-- VUE DÉTAIL POST (style Twitter) -->
+  <div class="view" id="view-post-detail">
+    <div class="sticky-hdr">
+      <div class="fhdr-row">
+        <button class="back-btn" id="btn-postdetail-back">←</button>
+        <div class="fhdr-title">Post</div>
+      </div>
+    </div>
+    <div id="postdetail-content"></div>
+    <div style="border-top:1px solid var(--b);padding:.75rem 1.25rem;background:var(--sa);font-size:.78rem;color:var(--m);">Commentaires</div>
+    <div id="postdetail-comments"></div>
+    <div id="postdetail-composer" style="position:sticky;bottom:0;background:var(--gl);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--b);padding:.75rem 1.25rem;display:none;">
+      <div style="display:flex;gap:.6rem;align-items:flex-end;">
+        <div class="av sm" id="postdetail-av">?</div>
+        <textarea class="dinput" id="postdetail-input" placeholder="Ajouter un commentaire… #tags supportés" rows="1"
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <button class="bsend" id="btn-postdetail-send">↑</button>
+      </div>
+    </div>
+    <div id="postdetail-login-cta" style="position:sticky;bottom:0;background:var(--gl);backdrop-filter:blur(20px);border-top:1px solid var(--b);padding:.75rem 1.25rem;display:none;">
+      <button class="bsend" style="width:100%;" id="btn-postdetail-login">Connecte-toi pour commenter</button>
+    </div>
+  </div>
 
 </main>
 
@@ -1020,7 +1067,7 @@ async function loadNotifs(){
   });
   db.from('notifications').update({is_read:true}).eq('user_id',ME.id).eq('is_read',false).then(()=>document.getElementById('notif-count').classList.add('hidden'));
 }
-async function goToPost(postId){showView('feed');await loadFeed();setTimeout(()=>{const el=document.getElementById('post-'+postId);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.transition='background .5s';el.style.background='rgba(155,126,200,.15)';setTimeout(()=>el.style.background='',1500);}},300);}
+async function goToPost(postId){openPostDetail(postId);}
 
 // ── ENREGISTRÉS ──
 async function loadSaved(){
@@ -1091,6 +1138,8 @@ function makePost(p){
 
   const cont=document.createElement('div');cont.className='pcontent';cont.id='cont-'+p.id;
   cont.innerHTML=renderContent(p.content);
+  cont.style.cursor='pointer';
+  cont.addEventListener('click',e=>{if(e.target.classList.contains('ht')){filterByTag(e.target.dataset.tag);}else if(!isDemo){openPostDetail(p.id);}});
   const ez=document.createElement('div');ez.id='ez-'+p.id;
 
   let imgEl=null;
@@ -1972,6 +2021,213 @@ document.getElementById('admin-user-search').addEventListener('input', e => {
   ADMIN_USER_TIMER = setTimeout(() => loadAdminUsers(e.target.value.trim()), 380);
 });
 
+
+// ═══════════════════════════════════════════
+// ── VUE DÉTAIL POST ──
+// ═══════════════════════════════════════════
+let DETAIL_POST_ID = null;
+
+async function openPostDetail(postId) {
+  DETAIL_POST_ID = postId;
+  showView('post-detail');
+  const cont = document.getElementById('postdetail-content');
+  const cmts = document.getElementById('postdetail-comments');
+  cont.innerHTML = '<div class="floader">Chargement…</div>';
+  cmts.innerHTML = '';
+
+  // Charger le post
+  const { data: p, error } = await db.from('forum_posts')
+    .select('*, profiles(id, pseudo, role_badge, avatar_url)')
+    .eq('id', postId).eq('is_deleted', false).single();
+
+  if (error || !p) { cont.innerHTML = '<div class="fempty">Post introuvable.</div>'; return; }
+
+  const po = toPostObj(p);
+  const isLiked = LIKED.has(postId);
+  const isSaved = SAVED.has(postId);
+  const isOwn = ME && p.user_id === ME.id;
+
+  // Afficher le post en grand
+  const postEl = document.createElement('div');
+  postEl.className = 'postdetail-post';
+
+  const head = document.createElement('div');
+  head.className = 'phead';
+  head.style.marginBottom = '.6rem';
+  const av = document.createElement('div');
+  av.className = 'av'; av.style.cursor = 'pointer';
+  setAvEl(av, po.avatar, po.pseudo);
+  av.addEventListener('click', () => loadProfile(p.user_id));
+  const nameEl = document.createElement('span'); nameEl.className = 'pname'; nameEl.textContent = po.pseudo;
+  nameEl.addEventListener('click', () => loadProfile(p.user_id));
+  const badgeEl = document.createElement('span'); badgeEl.className = 'pbadge'; badgeEl.textContent = po.badge;
+  const timeEl = document.createElement('span'); timeEl.className = 'ptime'; timeEl.textContent = po.time;
+  head.append(av, nameEl, badgeEl, timeEl);
+
+  const contentEl = document.createElement('div');
+  contentEl.className = 'pcontent'; contentEl.id = 'cont-' + postId;
+  contentEl.innerHTML = renderContent(po.content);
+  contentEl.addEventListener('click', e => { if (e.target.classList.contains('ht')) filterByTag(e.target.dataset.tag); });
+
+  postEl.append(head, contentEl);
+
+  if (po.image_url) {
+    const img = document.createElement('img');
+    img.className = 'post-img'; img.src = po.image_url; img.alt = '';
+    img.addEventListener('click', () => openLightbox(po.image_url));
+    postEl.appendChild(img);
+  }
+
+  // Stats
+  const stats = document.createElement('div');
+  stats.className = 'postdetail-stats';
+  stats.innerHTML = `<span class="pds-item"><strong>${po.likes}</strong> j'aime</span><span class="pds-item"><strong>${po.comments_count || 0}</strong> commentaires</span>`;
+
+  // Actions grandes
+  const acts = document.createElement('div');
+  acts.className = 'postdetail-actions';
+
+  const likeBtn = document.createElement('button');
+  likeBtn.className = 'pa' + (isLiked ? ' liked' : '');
+  likeBtn.innerHTML = `<span class="licon">${isLiked ? '♥' : '♡'}</span> <span class="lcount">${po.likes}</span>`;
+  likeBtn.addEventListener('click', () => { if (!ME) { openModal('login'); return; } toggleLike(postId, likeBtn); });
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'pa' + (isSaved ? ' saved' : '');
+  saveBtn.textContent = '🔖 Enregistrer';
+  saveBtn.addEventListener('click', () => { if (!ME) { openModal('login'); return; } toggleSave(postId, saveBtn); });
+
+  const shareBtn = document.createElement('button');
+  shareBtn.className = 'pa'; shareBtn.textContent = '↗ Partager';
+  shareBtn.addEventListener('click', () => sharePost(po.content));
+
+  acts.append(likeBtn, saveBtn, shareBtn);
+
+  if (isOwn) {
+    const editBtn = document.createElement('button'); editBtn.className = 'pa own-act'; editBtn.textContent = '✏️ Modifier';
+    editBtn.addEventListener('click', () => startEdit(postId, po.content));
+    const delBtn = document.createElement('button'); delBtn.className = 'pa own-act'; delBtn.textContent = '🗑️';
+    delBtn.addEventListener('click', async () => {
+      if (!confirm('Supprimer ce post ?')) return;
+      const { error } = await db.rpc('delete_own_post', { p_post_id: postId });
+      if (!error) { showView('feed'); loadFeed(); showToast('🗑️ Supprimé'); }
+    });
+    acts.append(editBtn, delBtn);
+  } else if (ME) {
+    const repBtn = document.createElement('button'); repBtn.className = 'pa'; repBtn.textContent = '⚑ Signaler';
+    repBtn.addEventListener('click', () => openReport('forum_post', postId, `post de ${po.pseudo}`));
+    acts.appendChild(repBtn);
+  }
+
+  postEl.append(stats, acts);
+  cont.innerHTML = '';
+  cont.appendChild(postEl);
+
+  // Composer sticky
+  const composer = document.getElementById('postdetail-composer');
+  const loginCta = document.getElementById('postdetail-login-cta');
+  if (ME) {
+    composer.style.display = 'block';
+    loginCta.style.display = 'none';
+    setAvEl(document.getElementById('postdetail-av'), MY_AVATAR, MY_PSEUDO);
+  } else {
+    composer.style.display = 'none';
+    loginCta.style.display = 'block';
+  }
+
+  await loadPostDetailComments(postId);
+}
+
+async function loadPostDetailComments(postId) {
+  const c = document.getElementById('postdetail-comments');
+  c.innerHTML = '<div class="floader">Chargement…</div>';
+  const { data, error } = await db.from('comments').select('*, profiles(id, pseudo, avatar_url, role_badge)')
+    .eq('post_id', postId).eq('post_type', 'forum').eq('is_deleted', false)
+    .order('created_at', { ascending: true });
+  c.innerHTML = '';
+  if (error || !data || data.length === 0) {
+    c.innerHTML = '<div class="fempty" style="padding:2rem;">Aucun commentaire. Sois le premier ! 🌙</div>';
+    return;
+  }
+  data.forEach(cm => c.appendChild(makeInlineComment(cm)));
+}
+
+function makeInlineComment(cm) {
+  const el = document.createElement('div');
+  el.className = 'inline-comment';
+  const pseudo = cm.profiles?.pseudo || 'Voyageur';
+  const uid = cm.profiles?.id;
+  const isLikedCmt = LIKED_CMTS.has(cm.id);
+  const isOwn = ME && cm.user_id === ME.id;
+
+  const av = document.createElement('div');
+  av.className = 'av sm'; av.style.cssText = 'align-self:flex-start;cursor:pointer;flex-shrink:0;';
+  setAvEl(av, cm.profiles?.avatar_url, pseudo);
+  av.addEventListener('click', () => { if (uid) loadProfile(uid); });
+
+  const body = document.createElement('div'); body.className = 'ic-body';
+  const head = document.createElement('div'); head.className = 'ic-head';
+  const nameEl = document.createElement('span'); nameEl.className = 'ic-name'; nameEl.textContent = pseudo;
+  nameEl.addEventListener('click', () => { if (uid) loadProfile(uid); });
+  const badgeEl = document.createElement('span'); badgeEl.className = 'pbadge'; badgeEl.textContent = cm.profiles?.role_badge || '';
+  const timeEl = document.createElement('span'); timeEl.className = 'ic-time'; timeEl.textContent = timeAgo(cm.created_at);
+  head.append(nameEl, badgeEl, timeEl);
+
+  const contentEl = document.createElement('div'); contentEl.className = 'ic-content';
+  contentEl.innerHTML = renderContent(cm.content || '');
+  contentEl.addEventListener('click', e => { if (e.target.classList.contains('ht')) filterByTag(e.target.dataset.tag); });
+
+  body.append(head, contentEl);
+
+  if (cm.image_url) {
+    const img = document.createElement('img'); img.className = 'ic-img'; img.src = cm.image_url; img.alt = '';
+    img.addEventListener('click', () => openLightbox(cm.image_url));
+    body.appendChild(img);
+  }
+
+  // Actions
+  const acts = document.createElement('div'); acts.className = 'ic-actions';
+  const likeBtn = document.createElement('button');
+  likeBtn.className = 'pa' + (isLikedCmt ? ' liked' : '');
+  likeBtn.innerHTML = `<span>${isLikedCmt ? '♥' : '♡'}</span> <span class="clcount">${cm.likes || 0}</span>`;
+  likeBtn.addEventListener('click', () => toggleCommentLike(cm.id, likeBtn));
+  acts.appendChild(likeBtn);
+
+  if (!isOwn && ME) {
+    const repBtn = document.createElement('button'); repBtn.className = 'pa'; repBtn.textContent = '⚑';
+    repBtn.addEventListener('click', () => openReport('comment', cm.id, `commentaire de ${pseudo}`));
+    acts.appendChild(repBtn);
+  }
+  if (isOwn) {
+    const delBtn = document.createElement('button'); delBtn.className = 'pa own-act'; delBtn.textContent = '🗑️';
+    delBtn.addEventListener('click', async () => {
+      const { error } = await db.from('comments').update({ is_deleted: true }).eq('id', cm.id).eq('user_id', ME.id);
+      if (!error) { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }
+    });
+    acts.appendChild(delBtn);
+  }
+  body.appendChild(acts);
+  el.append(av, body);
+  return el;
+}
+
+async function submitDetailComment() {
+  if (!ME) { openModal('login'); return; }
+  if (!DETAIL_POST_ID) return;
+  const input = document.getElementById('postdetail-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = ''; input.style.height = 'auto';
+  const { error } = await db.from('comments').insert({ user_id: ME.id, post_id: DETAIL_POST_ID, post_type: 'forum', content: text });
+  if (!error) { await loadPostDetailComments(DETAIL_POST_ID); sendNotif(DETAIL_POST_ID, 'comment'); }
+  else showToast('Erreur : ' + error.message);
+}
+
+
+document.getElementById('btn-postdetail-back').addEventListener('click', () => history.back() || showView('feed'));
+document.getElementById('btn-postdetail-send').addEventListener('click', submitDetailComment);
+document.getElementById('postdetail-input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitDetailComment(); } });
+document.getElementById('btn-postdetail-login').addEventListener('click', () => openModal('login'));
 initTheme();showTrending();initAuth();loadFeed();
 </script>
 </body>
