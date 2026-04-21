@@ -1492,31 +1492,47 @@ function openJournalEdit(e){
   showJournalForm();
 }
 
+
+
 async function saveJournal(){
-  const title=document.getElementById('j-title').value.trim();
-  const content=document.getElementById('j-content').value.trim();
-  if(!title||!content){showToast('Titre et contenu requis.');return;}
-  const method=document.getElementById('j-method').value;
+  const title=(document.getElementById('j-title').value||'').trim();
+  const content2=(document.getElementById('j-content').value||'').trim();
+  if(!title||!content2){showToast('Titre et contenu requis.');return;}
+  const method=document.getElementById('j-method').value||null;
   const success=document.getElementById('j-success').checked;
   const isPublic=document.getElementById('j-public').checked;
-  const btn=document.getElementById('btn-jsave');btn.disabled=true;btn.textContent='Enregistrement…';
-  const payload={title,content,method_used:method||null,success,is_public:isPublic,feelings:SELECTED_FEELINGS};
-  let error;
-  if(J_EDITING_ID){
-    ({error}=await db.from('journal_entries').update(payload).eq('id',J_EDITING_ID).eq('user_id',ME.id));
-  }else{
-    ({error}=await db.from('journal_entries').insert({...payload,user_id:ME.id}));
+  const feelings=[...SELECTED_FEELINGS];
+  const btn=document.getElementById('btn-jsave');
+  btn.disabled=true;btn.textContent='Enregistrement\u2026';
+  try{
+    const payload={title,content:content2,method_used:method||null,success,is_public:isPublic,feelings};
+    let dbErr;
+    if(J_EDITING_ID){
+      const r=await db.from('journal_entries').update(payload).eq('id',J_EDITING_ID).eq('user_id',ME.id);
+      dbErr=r.error;
+    }else{
+      const r=await db.from('journal_entries').insert({...payload,user_id:ME.id});
+      dbErr=r.error;
+    }
+    if(dbErr){showToast('Erreur DB : '+dbErr.message);return;}
+    if(isPublic){
+      const parts=['\ud83d\udcd6 '+title];
+      if(method)parts.push('\ud83e\udded M\xe9thode : '+method);
+      if(success)parts.push('\u2713 SHC r\xe9ussie !');
+      parts.push('',content2.slice(0,400)+(content2.length>400?'\u2026':''),'','#journalonirique #shc');
+      const pc=parts.join('\n');
+      const r2=await db.from('forum_posts').insert({user_id:ME.id,category:'shc',title:title.slice(0,60),content:pc});
+      if(r2.error)console.warn('Post feed:',r2.error.message);
+    }
+    showToast(J_EDITING_ID?'\u2713 Entr\xe9e modifi\xe9e':'\u2713 Entr\xe9e cr\xe9\xe9e');
+    loadJournal();
+    if(isPublic)loadFeed();
+  }catch(err){
+    console.error('saveJournal:',err);
+    showToast('Erreur inattendue : '+err.message);
+  }finally{
+    btn.disabled=false;btn.textContent='Enregistrer';
   }
-  btn.disabled=false;btn.textContent='Enregistrer';
-  if(error){showToast('Erreur : '+error.message);return;}
-  if(isPublic){
-    const pc='\ud83d\udcd6 '+title+(method?' \u00b7 \ud83e\udded '+method:'')+(success?' \u00b7 \u2713 SHC r\u00e9ussie':'')+'\n\n'+content.slice(0,400)+(content.length>400?'\u2026':'')+' \n\n#journalonirique #shc';
-    const {error:pe}=await db.from('forum_posts').insert({user_id:ME.id,category:'shc',title:title.slice(0,60),content:pc});
-    if(pe)showToast('Post non cr\u00e9\u00e9 : '+pe.message);
-  }
-  showToast(J_EDITING_ID?'\u2713 Entr\u00e9e modifi\u00e9e':'\u2713 Entr\u00e9e cr\u00e9\u00e9e');
-  loadJournal();
-  if(isPublic)loadFeed();
 }
 
 // ═══════════════════════════════════════════
