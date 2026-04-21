@@ -1422,7 +1422,16 @@ function makeJournalCard(e){
   const editBtn=document.createElement('button');editBtn.className='bsm bsm-g';editBtn.textContent='✏️ Modifier';editBtn.style.fontSize='.75rem';
   editBtn.addEventListener('click',e2=>{e2.stopPropagation();openJournalEdit(e);});
   const delBtn=document.createElement('button');delBtn.className='bsm bsm-r';delBtn.textContent='🗑️';delBtn.style.fontSize='.75rem';
-  delBtn.addEventListener('click',async e2=>{e2.stopPropagation();if(!confirm('Supprimer cette entrée ?'))return;const {error}=await db.from('journal_entries').delete().eq('id',e.id).eq('user_id',ME.id);if(!error)el.remove();else showToast('Erreur : '+error.message);});
+  delBtn.addEventListener('click',async e2=>{
+    e2.stopPropagation();
+    if(!confirm('Supprimer cette entrée ? Le post feed associé sera également supprimé.'))return;
+    if(e.linked_post_id){
+      await db.rpc('delete_own_post',{p_post_id:e.linked_post_id});
+    }
+    const {error}=await db.from('journal_entries').delete().eq('id',e.id).eq('user_id',ME.id);
+    if(!error){el.remove();showToast('🗑️ Entrée supprimée');if(e.linked_post_id)loadFeed();}
+    else showToast('Erreur : '+error.message);
+  }));
   acts.append(viewBtn,editBtn,delBtn);
   el.append(head,meta,preview,acts);
   el.addEventListener('click',()=>openJournalDetail(e));
@@ -1455,15 +1464,28 @@ function openJournalDetail(e){
   const pubBtn=document.getElementById('btn-jpublish')||document.getElementById('btn-junpublish');
   if(pubBtn)pubBtn.addEventListener('click',async()=>{
     const newPublic=!e.is_public;
+    if(!newPublic && e.linked_post_id){
+      // Rendre privé → supprimer le post feed lié
+      await db.rpc('delete_own_post',{p_post_id:e.linked_post_id});
+      await db.from('journal_entries').update({is_public:false,linked_post_id:null}).eq('id',e.id).eq('user_id',ME.id);
+      showToast('🔒 Rendu privé — post supprimé du feed');
+      loadFeed();loadJournal();return;
+    }
     const {error}=await db.from('journal_entries').update({is_public:newPublic}).eq('id',e.id).eq('user_id',ME.id);
     if(error){showToast('Erreur : '+error.message);return;}
-    // Si on rend public, créer un post dans le feed
     if(newPublic){
-      const pc='📖 '+e.title+(e.method_used?' · 🧭 '+e.method_used:'')+(e.success?' · ✓ SHC réussie':'')+'\n\n'+e.content.slice(0,400)+(e.content.length>400?'…':'')+' \n\n#journalonirique #shc';
-      await db.from('forum_posts').insert({user_id:ME.id,category:'shc',title:e.title.slice(0,60),content:pc});
+      const parts=['📖 '+e.title];
+      if(e.method_used)parts.push('🧭 Méthode : '+e.method_used);
+      if(e.success)parts.push('✓ SHC réussie !');
+      parts.push('',e.content.slice(0,400)+(e.content.length>400?'…':''),'','#journalonirique #shc');
+      const pc=parts.join('\n');
+      const r2=await db.from('forum_posts').insert({user_id:ME.id,category:'shc',title:e.title.slice(0,60),content:pc}).select('id').single();
+      if(!r2.error&&r2.data){
+        await db.from('journal_entries').update({linked_post_id:r2.data.id}).eq('id',e.id).eq('user_id',ME.id);
+      }
       loadFeed();
     }
-    showToast(newPublic?'🌐 Entrée publiée dans le feed':'🔒 Entrée rendue privée');
+    showToast(newPublic?'🌐 Publié dans le feed':'🔒 Rendu privé');
     loadJournal();
   });
 }
@@ -1521,8 +1543,17 @@ async function saveJournal(){
       if(success)parts.push('\u2713 SHC r\xe9ussie !');
       parts.push('',content2.slice(0,400)+(content2.length>400?'\u2026':''),'','#journalonirique #shc');
       const pc=parts.join('\n');
-      const r2=await db.from('forum_posts').insert({user_id:ME.id,category:'shc',title:title.slice(0,60),content:pc});
-      if(r2.error)console.warn('Post feed:',r2.error.message);
+      const r2=await db.from('forum_posts').insert({user_id:ME.id,category:'shc',title:title.slice(0,60),content:pc}).select('id').single();
+      if(r2.error){console.warn('Post feed:',r2.error.message);}
+      else if(r2.data){
+        const linkedId=r2.data.id;
+        if(J_EDITING_ID){
+          await db.from('journal_entries').update({linked_post_id:linkedId}).eq('id',J_EDITING_ID).eq('user_id',ME.id);
+        }else{
+          const {data:last}=await db.from('journal_entries').select('id').eq('user_id',ME.id).order('created_at',{ascending:false}).limit(1).single();
+          if(last)await db.from('journal_entries').update({linked_post_id:linkedId}).eq('id',last.id).eq('user_id',ME.id);
+        }
+      }
     }
     showToast(J_EDITING_ID?'\u2713 Entr\xe9e modifi\xe9e':'\u2713 Entr\xe9e cr\xe9\xe9e');
     loadJournal();
