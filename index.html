@@ -1559,7 +1559,7 @@ document.querySelectorAll('.ftab[data-ptab]').forEach(t=>{
 
 // Biblio cats
 document.querySelectorAll('.biblio-cat').forEach(btn=>{
-  btn.addEventListener('click',()=>{ACTIVE_BCAT=btn.dataset.bcat;document.querySelectorAll('.biblio-cat').forEach(b=>b.classList.remove('active'));btn.classList.add('active');loadBiblio();});
+  btn.addEventListener('click',()=>{ACTIVE_BCAT=btn.dataset.bcat;document.querySelectorAll('.biblio-cat').forEach(b=>b.classList.remove('active'));btn.classList.add('active');showBiblioList();loadBiblio();});
 });
 
 document.getElementById('htag-bar-clr').addEventListener('click',clearTagFilter);
