@@ -1431,7 +1431,7 @@ function makeJournalCard(e){
     const {error}=await db.from('journal_entries').delete().eq('id',e.id).eq('user_id',ME.id);
     if(!error){el.remove();showToast('🗑️ Entrée supprimée');if(e.linked_post_id)loadFeed();}
     else showToast('Erreur : '+error.message);
-  }));
+  });
   acts.append(viewBtn,editBtn,delBtn);
   el.append(head,meta,preview,acts);
   el.addEventListener('click',()=>openJournalDetail(e));
