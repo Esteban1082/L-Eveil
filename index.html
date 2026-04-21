@@ -1454,8 +1454,17 @@ function openJournalDetail(e){
   document.getElementById('btn-jdetail-edit').addEventListener('click',()=>openJournalEdit(e));
   const pubBtn=document.getElementById('btn-jpublish')||document.getElementById('btn-junpublish');
   if(pubBtn)pubBtn.addEventListener('click',async()=>{
-    const {error}=await db.from('journal_entries').update({is_public:!e.is_public}).eq('id',e.id).eq('user_id',ME.id);
-    if(!error){showToast(e.is_public?'🔒 Entrée rendue privée':'🌐 Entrée rendue publique');loadJournal();}
+    const newPublic=!e.is_public;
+    const {error}=await db.from('journal_entries').update({is_public:newPublic}).eq('id',e.id).eq('user_id',ME.id);
+    if(error){showToast('Erreur : '+error.message);return;}
+    // Si on rend public, créer un post dans le feed
+    if(newPublic){
+      const pc='📖 '+e.title+(e.method_used?' · 🧭 '+e.method_used:'')+(e.success?' · ✓ SHC réussie':'')+'\n\n'+e.content.slice(0,400)+(e.content.length>400?'…':'')+' \n\n#journalonirique #shc';
+      await db.from('forum_posts').insert({user_id:ME.id,category:'shc',title:e.title.slice(0,60),content:pc});
+      loadFeed();
+    }
+    showToast(newPublic?'🌐 Entrée publiée dans le feed':'🔒 Entrée rendue privée');
+    loadJournal();
   });
 }
 
@@ -1497,16 +1506,17 @@ async function saveJournal(){
     ({error}=await db.from('journal_entries').update(payload).eq('id',J_EDITING_ID).eq('user_id',ME.id));
   }else{
     ({error}=await db.from('journal_entries').insert({...payload,user_id:ME.id}));
-    // Si public → aussi créer un post dans le feed
-    if(!error&&isPublic){
-      const text=`📖 Journal onirique\n\n**${title}**\n\n${content.slice(0,300)}${content.length>300?'…':''}${method?'\n\n🧭 Méthode : '+method:''}${success?'\n✓ SHC réussie !':''}\n\n#shc #journalonirique`;
-      await db.from('forum_posts').insert({user_id:ME.id,category:'shc',title:title.slice(0,60),content:text});
-    }
   }
   btn.disabled=false;btn.textContent='Enregistrer';
   if(error){showToast('Erreur : '+error.message);return;}
-  showToast(J_EDITING_ID?'✓ Entrée modifiée':'✓ Entrée créée');
+  if(isPublic){
+    const pc='\ud83d\udcd6 '+title+(method?' \u00b7 \ud83e\udded '+method:'')+(success?' \u00b7 \u2713 SHC r\u00e9ussie':'')+'\n\n'+content.slice(0,400)+(content.length>400?'\u2026':'')+' \n\n#journalonirique #shc';
+    const {error:pe}=await db.from('forum_posts').insert({user_id:ME.id,category:'shc',title:title.slice(0,60),content:pc});
+    if(pe)showToast('Post non cr\u00e9\u00e9 : '+pe.message);
+  }
+  showToast(J_EDITING_ID?'\u2713 Entr\u00e9e modifi\u00e9e':'\u2713 Entr\u00e9e cr\u00e9\u00e9e');
   loadJournal();
+  if(isPublic)loadFeed();
 }
 
 // ═══════════════════════════════════════════
