@@ -653,7 +653,7 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
   <button class="mob-nav-btn" id="mob-btn-search" data-view="search">
     <span>🔍</span><span class="mob-nav-label">Recherche</span>
   </button>
-  <button class="mob-nav-btn mob-post-btn" id="mob-btn-post">✦</button>
+  <button class="mob-nav-btn mob-post-btn" id="mob-btn-post" title="Publier">✦</button>
   <button class="mob-nav-btn" id="mob-btn-notifs" data-view="notifs">
     <span>🔔</span><span class="mob-nav-label">Notifs</span>
     <span class="mob-badge hidden" id="mob-notif-badge">0</span>
@@ -3549,8 +3549,15 @@ document.getElementById('mob-btn-notifs').addEventListener('click', () => {
 });
 document.getElementById('mob-btn-post').addEventListener('click', () => {
   if (!ME) { openModal('login'); return; }
-  closeMobSidebar(); showView('feed');
-  setTimeout(() => document.getElementById('comp-text').focus(), 100);
+  const onFeed = document.getElementById('view-feed').classList.contains('active');
+  if (!onFeed) showView('feed');
+  setTimeout(() => {
+    const ta = document.getElementById('comp-text');
+    ta.focus();
+    ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, onFeed ? 0 : 150);
+  document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mob-btn-feed').classList.add('active');
 });
 
 // Sync badge notif sur bottom nav
