@@ -1407,7 +1407,7 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
     </div>
     <div class="fg">
       <label class="fl">Ton message *</label>
-      <textarea class="fi" id="feedback-text" rows="5" placeholder="Décris ton retour aussi précisément que possible…" style="resize:vertical;"></textarea>
+      <textarea class="fi" id="feedback-text" rows="5" placeholder="Décris ton retour aussi précisément que possible… (min 15 caractères)" style="resize:vertical;"></textarea>
     </div>
     <div class="fg">
       <label class="fl">Contact (optionnel)</label>
@@ -2412,6 +2412,7 @@ async function checkAdminRole() {
   if (MY_ROLE === 'admin' || MY_ROLE === 'modo') {
     navAdmin.classList.remove('hidden');
     checkPendingReports();
+    checkFeedbackBadge();
   } else {
     navAdmin.classList.add('hidden');
   }
@@ -3771,7 +3772,7 @@ document.getElementById('btn-feedback-submit').addEventListener('click', async (
   const okEl = document.getElementById('feedback-ok');
   errEl.style.display = 'none'; okEl.style.display = 'none';
   if (!FEEDBACK_TYPE) { errEl.textContent = 'Choisis un type de retour.'; errEl.classList.remove('hidden'); return; }
-  if (!msg || msg.length < 10) { errEl.textContent = 'Message trop court (10 min).'; errEl.classList.remove('hidden'); return; }
+  if (!msg || msg.length < 15) { errEl.textContent = 'Message trop court — minimum 15 caractères s\'il te plaît.'; errEl.style.display='block'; return; }
   const btn = document.getElementById('btn-feedback-submit');
   btn.disabled = true; btn.textContent = 'Envoi…';
   const { error } = await db.from('feedback').insert({
@@ -3839,14 +3840,13 @@ function addTranslateBtnEl(p, acts, contEl) {
   _addTranslateBtnCore(p, acts, contEl);
 }
 
-// addTranslateBtn : version standard qui trouve l'élément par ID (feed)
+// addTranslateBtn : version standard — lazy (cherche l'élément au moment du clic)
 function addTranslateBtn(p, acts) {
-  const contEl = document.getElementById('cont-' + p.id);
-  _addTranslateBtnCore(p, acts, contEl);
+  _addTranslateBtnCore(p, acts, null, () => document.getElementById('cont-' + p.id));
 }
 
 // Ajouter bouton traduction sur un post
-function _addTranslateBtnCore(p, acts, contEl) {
+function _addTranslateBtnCore(p, acts, contEl, contElResolver) {
   // Pas de bouton si même langue ou post de démo
   if (String(p.id).startsWith('d')) return;
   const targetLang = USER_LANG === 'fr' ? 'en' : 'fr';
@@ -3891,14 +3891,16 @@ function _addTranslateBtnCore(p, acts, contEl) {
     }
     transBtn.disabled = false;
     if (!result) { showToast('Traduction indisponible.'); transBtn.innerHTML = `🌐 <span>${langLabel}</span>`; return; }
-    if (!contEl) { showToast('Élément introuvable.'); return; }
+    // Résoudre l'élément au moment du clic si pas passé directement
+    const resolvedEl = contEl || (contElResolver ? contElResolver() : null);
+    if (!resolvedEl) { showToast('Traduction indisponible — contenu non trouvé.'); return; }
     transEl = document.createElement('div');
     transEl.className = 'translated-text';
     transEl.textContent = result;
     const credit = document.createElement('div');
     credit.className = 'translate-credit';
     credit.textContent = `Traduit en ${targetLang.toUpperCase()} via MyMemory`;
-    contEl.after(transEl);
+    resolvedEl.after(transEl);
     transEl.after(credit);
     translated = true;
     transBtn.innerHTML = `🌐 <span>↩</span>`;
@@ -3927,6 +3929,8 @@ async function loadAdminFeedback() {
   const newCount = data.filter(f => f.status === 'new').length;
   const badge = document.getElementById('feedback-count');
   if (badge) { if(newCount>0){badge.textContent=newCount;badge.classList.remove('hidden');}else badge.classList.add('hidden'); }
+  // Badge reports
+  checkPendingReports();
 
   const typeLabels = { bug:'🐛 Bug', amelioration:'✨ Amélioration', suggestion:'💡 Suggestion', autre:'💬 Autre' };
   const statusColors = { new:'var(--a)', read:'var(--m)', done:'var(--mint)', dismissed:'var(--fa)' };
@@ -3958,11 +3962,8 @@ async function updateFeedbackStatus(id, status, btn) {
   loadAdminFeedback();
 }
 
-// ── Patch la fonction checkPendingReports pour inclure le badge feedback ──
-const _origCheckPending = checkPendingReports;
-async function checkPendingReports() {
-  await _origCheckPending();
-  // Check feedback nouveaux
+// ── Badge feedback (séparé pour éviter récursion) ──
+async function checkFeedbackBadge() {
   try {
     const { count } = await db.from('feedback').select('*',{count:'exact',head:true}).eq('status','new');
     const badge = document.getElementById('feedback-count');
