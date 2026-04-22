@@ -19,10 +19,10 @@
 [data-theme="light"]{--bg:#F8F4EE;--s:#FFFCF8;--sa:#F5F1EA;--sh:#EDE8DE;--b:rgba(232,168,124,.18);--bh:rgba(232,168,124,.35);--t:#1A180F;--m:#7A6E5A;--fa:#B0A89A;--ov:rgba(20,28,16,.4);--gl:rgba(255,252,248,.88);--red:#C47B8A;}
 [data-theme="dark"]{--bg:#070C0A;--s:rgba(10,16,10,0.97);--sa:rgba(255,255,255,0.04);--sh:rgba(255,255,255,0.06);--b:rgba(255,255,255,0.07);--bh:rgba(255,255,255,0.13);--t:#E8E0D0;--m:#A09880;--fa:#5A5245;--ov:rgba(0,0,0,.78);--gl:rgba(7,12,10,0.92);--red:#C47B8A;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{font-size:15px;}
+html{font-size:16px;}
 body{font-family:var(--f);font-weight:400;background:radial-gradient(ellipse 80% 50% at 20% 40%,rgba(61,107,79,0.18) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 70% 0%,rgba(122,171,204,0.08) 0%,transparent 55%),radial-gradient(ellipse 24% 28% at 8% 60%,rgba(232,168,124,0.12) 0%,transparent 50%),var(--bg);color:var(--t);min-height:100vh;transition:background .3s,color .3s;overflow-x:hidden;}
 button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:var(--f);}
-.app{display:flex;min-height:100vh;max-width:1280px;margin:0 auto;position:relative;z-index:1;}
+.app{display:flex;min-height:100vh;max-width:1440px;margin:0 auto;position:relative;z-index:1;}
 
 /* SIDEBAR */
 .sl{width:260px;flex-shrink:0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:1.25rem 1rem;border-right:1px solid rgba(255,255,255,0.07);overflow-y:auto;scrollbar-width:none;background:rgba(7,10,7,0.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);}
@@ -52,7 +52,7 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 .tbtn:hover{border-color:var(--a);color:var(--a);}
 
 /* CENTRE */
-.center{flex:1;min-width:0;max-width:620px;border-right:1px solid var(--b);}
+.center{flex:1;min-width:0;max-width:680px;border-right:1px solid var(--b);}
 .view{display:none;}.view.active{display:block;}
 .sticky-hdr{position:sticky;top:0;background:rgba(7,12,10,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:10;border-bottom:1px solid rgba(255,255,255,0.07);}
 .fhdr-row{display:flex;align-items:center;gap:.75rem;padding:.75rem 1.25rem;}
@@ -480,6 +480,70 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 .settings-card .fg{padding:0 1rem .6rem;}
 .settings-card .bsm{margin:.6rem 1rem;}
 
+
+/* ── MOBILE OVERLAY (swipe sidebar) ── */
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:499;backdrop-filter:blur(4px);}
+
+/* ── BOTTOM NAV MOBILE ── */
+.mob-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  height:60px;background:rgba(7,10,7,.95);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-top:1px solid rgba(255,255,255,.08);
+  z-index:400;align-items:center;justify-content:space-around;
+  padding:0 .5rem;
+}
+.mob-nav-btn{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:none;border:none;color:var(--m);font-size:1.25rem;
+  padding:.4rem .6rem;border-radius:12px;cursor:pointer;
+  transition:all .2s;position:relative;flex:1;
+}
+.mob-nav-btn:hover,.mob-nav-btn.active{color:var(--a);}
+.mob-nav-label{font-size:.58rem;font-weight:500;letter-spacing:.02em;}
+.mob-post-btn{
+  background:var(--a);color:#070C0A!important;
+  border-radius:50%;width:44px;height:44px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;flex:none;box-shadow:0 4px 16px rgba(232,168,124,.35);
+}
+.mob-post-btn:hover{background:var(--ah);transform:scale(1.07);}
+.mob-badge{
+  position:absolute;top:.25rem;right:.7rem;
+  min-width:16px;height:16px;border-radius:50px;
+  background:var(--red);color:#fff;font-size:.58rem;
+  font-weight:600;display:flex;align-items:center;justify-content:center;
+  padding:0 3px;line-height:1;
+}
+
+/* ── DISCORD BUTTON ── */
+.discord-btn{
+  width:100%;padding:.72rem;border-radius:10px;
+  background:#5865F2;color:#fff;border:none;
+  font-family:var(--f);font-size:.87rem;font-weight:500;
+  cursor:pointer;transition:all .2s;display:flex;
+  align-items:center;justify-content:center;gap:.6rem;
+  margin-bottom:.75rem;
+}
+.discord-btn:hover{background:#4752C4;transform:translateY(-1px);}
+.auth-sep{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;}
+.auth-sep-line{flex:1;height:1px;background:var(--b);}
+.auth-sep-txt{font-size:.72rem;color:var(--fa);white-space:nowrap;}
+
+/* ── FONT SIZE ── */
+[data-font="sm"]  html, html[data-font="sm"]{font-size:14px;}
+[data-font="md"]  html, html[data-font="md"]{font-size:16px;}
+[data-font="lg"]  html, html[data-font="lg"]{font-size:18px;}
+[data-font="xl"]  html, html[data-font="xl"]{font-size:20px;}
+
+.font-options{display:flex;gap:.4rem;padding:.6rem 1rem;}
+.font-opt{flex:1;padding:.5rem;border-radius:10px;border:1px solid var(--b);
+  background:var(--sa);color:var(--m);font-family:var(--f);cursor:pointer;
+  transition:all .2s;text-align:center;}
+.font-opt:hover{border-color:var(--a);color:var(--a);}
+.font-opt.active{background:rgba(232,168,124,.15);color:var(--a);border-color:var(--a);font-weight:500;}
+.font-opt-lbl{display:block;font-size:.65rem;color:var(--m);margin-top:.2rem;}
+
 /* ── ADMIN ── */
 .report-card{padding:1rem 1.25rem;border-bottom:1px solid var(--b);transition:background .15s;}
 .report-card:hover{background:var(--sh);}
@@ -545,17 +609,53 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 [data-theme="light"] .toast{background:rgba(255,252,248,0.96);border-color:rgba(232,168,124,0.3);color:var(--t);}
 @media(max-width:1100px){.sr{display:none;}}
 @media(max-width:720px){
-  .sl{width:64px;padding:1rem .5rem;}
-  .ni-label,.umini-info,.logo small,.nav-sep{display:none;}
-  .logo{padding:.5rem;font-size:1.2rem;}.logo em{display:none;}
-  .btn-post{margin:.65rem auto .4rem;border-radius:50%;width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;font-size:1rem;}
-  .ni{justify-content:center;padding:.68rem;}
-  .umini{justify-content:center;}
+  /* ── Sidebar masquée, ouverte via swipe ── */
+  .sl{
+    position:fixed;top:0;left:0;bottom:0;z-index:500;
+    width:280px;padding:1.25rem 1rem;
+    transform:translateX(-100%);
+    transition:transform .3s cubic-bezier(.23,1,.32,1);
+    box-shadow:4px 0 32px rgba(0,0,0,.4);
+  }
+  .sl.mob-open{transform:translateX(0);}
+  .mob-overlay{display:block!important;}
+  /* Centre prend toute la largeur */
+  .center{max-width:100vw;border-right:none;}
+  /* Barre nav bas */
+  .mob-nav{display:flex!important;}
+  /* Padding bas pour la nav */
+  .view.active{padding-bottom:68px;}
+  /* Drawer full width */
   .drawer{width:100vw;}
+  /* App sans marge */
+  .app{max-width:100vw;}
+  /* Masquer le btn Publier sidebar */
+  .btn-post{display:none;}
 }
 </style>
 </head>
 <body>
+<!-- ════ MOBILE OVERLAY ════ -->
+<div class="mob-overlay" id="mob-overlay"></div>
+
+<!-- ════ BOTTOM NAV MOBILE ════ -->
+<nav class="mob-nav" id="mob-nav">
+  <button class="mob-nav-btn active" id="mob-btn-feed" data-view="feed">
+    <span>🏠</span><span class="mob-nav-label">Accueil</span>
+  </button>
+  <button class="mob-nav-btn" id="mob-btn-search" data-view="search">
+    <span>🔍</span><span class="mob-nav-label">Recherche</span>
+  </button>
+  <button class="mob-nav-btn mob-post-btn" id="mob-btn-post">✦</button>
+  <button class="mob-nav-btn" id="mob-btn-notifs" data-view="notifs">
+    <span>🔔</span><span class="mob-nav-label">Notifs</span>
+    <span class="mob-badge hidden" id="mob-notif-badge">0</span>
+  </button>
+  <button class="mob-nav-btn" id="mob-btn-menu">
+    <span>☰</span><span class="mob-nav-label">Menu</span>
+  </button>
+</nav>
+
 <div class="app">
 
 <!-- ════ SIDEBAR ════ -->
@@ -957,6 +1057,23 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
     </div>
     <div class="settings-body" id="settings-body">
 
+      <!-- Apparence -->
+      <div class="settings-section">
+        <div class="settings-section-title">🎨 Apparence</div>
+        <div class="settings-card">
+          <div class="sc-row">
+            <div><div class="sc-label">Taille du texte</div><div class="sc-sub">Ajuste la lisibilité de l'interface</div></div>
+          </div>
+          <div class="font-options" id="font-options">
+            <button class="font-opt" data-font="sm">A<small class="font-opt-lbl">Petit</small></button>
+            <button class="font-opt active" data-font="md" style="font-size:1rem;">A<small class="font-opt-lbl">Normal</small></button>
+            <button class="font-opt" data-font="lg" style="font-size:1.15rem;">A<small class="font-opt-lbl">Grand</small></button>
+            <button class="font-opt" data-font="xl" style="font-size:1.3rem;">A<small class="font-opt-lbl">Très grand</small></button>
+          </div>
+          <div style="height:.6rem;"></div>
+        </div>
+      </div>
+
       <!-- Sécurité -->
       <div class="settings-section">
         <div class="settings-section-title">🔐 Sécurité</div>
@@ -1205,6 +1322,11 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
       <button class="mtab active" data-mtab="login">Connexion</button>
       <button class="mtab" data-mtab="signup">S'inscrire</button>
     </div>
+    <button class="discord-btn" id="btn-discord-login">
+      <svg width="20" height="20" viewBox="0 0 127.14 96.36" fill="currentColor"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+      Continuer avec Discord
+    </button>
+    <div class="auth-sep"><div class="auth-sep-line"></div><div class="auth-sep-txt">ou avec un pseudo</div><div class="auth-sep-line"></div></div>
     <div id="mf-login">
       <p class="msub">Connecte-toi avec ton pseudonyme.</p>
       <div class="fg"><label class="fl">Pseudonyme</label><input type="text" class="fi" id="l-pseudo" placeholder="VoyageurAstral" autocomplete="username"/></div>
@@ -2057,6 +2179,7 @@ document.getElementById('s-conf').addEventListener('keydown',e=>{if(e.key==='Ent
 document.querySelectorAll('.ni[data-view]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     if(btn.dataset.auth&&!ME){openModal('login');return;}
+    if(window.innerWidth<=720)closeMobSidebar();
     document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));btn.classList.add('active');
     const v=btn.dataset.view;
     if(v==='search'){showView('search');showTrending();setTimeout(()=>document.getElementById('search-input').focus(),100);}
@@ -3264,7 +3387,179 @@ document.getElementById('btn-pwa-install').addEventListener('click', async () =>
   deferredInstallPrompt = null;
 });
 
-registerSW();initTheme();showTrending();initAuth();loadFeed();
+
+// ═══════════════════════════════════════════
+// ── MOBILE SIDEBAR DRAWER ──
+// ═══════════════════════════════════════════
+let mobSidebarOpen = false;
+let swipeStartX = 0;
+let swipeStartY = 0;
+
+function openMobSidebar() {
+  mobSidebarOpen = true;
+  document.querySelector('.sl').classList.add('mob-open');
+  document.getElementById('mob-overlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function closeMobSidebar() {
+  mobSidebarOpen = false;
+  document.querySelector('.sl').classList.remove('mob-open');
+  document.getElementById('mob-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Swipe depuis le bord gauche → ouvre sidebar
+document.addEventListener('touchstart', e => {
+  swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - swipeStartX;
+  const dy = Math.abs(e.changedTouches[0].clientY - swipeStartY);
+  const isMob = window.innerWidth <= 720;
+  if (!isMob) return;
+  // Swipe droite depuis bord gauche (<40px) → ouvre
+  if (swipeStartX < 40 && dx > 60 && dy < 80) {
+    openMobSidebar();
+  }
+  // Swipe gauche → ferme
+  if (mobSidebarOpen && dx < -60 && dy < 80) {
+    closeMobSidebar();
+  }
+}, { passive: true });
+
+// Overlay clic → ferme
+document.getElementById('mob-overlay').addEventListener('click', closeMobSidebar);
+document.getElementById('mob-btn-menu').addEventListener('click', () => {
+  if (mobSidebarOpen) closeMobSidebar(); else openMobSidebar();
+});
+
+// Bottom nav buttons
+document.getElementById('mob-btn-feed').addEventListener('click', () => {
+  closeMobSidebar(); showView('feed');
+  document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mob-btn-feed').classList.add('active');
+});
+document.getElementById('mob-btn-search').addEventListener('click', () => {
+  closeMobSidebar(); showView('search'); showTrending();
+  setTimeout(() => document.getElementById('search-input').focus(), 100);
+  document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mob-btn-search').classList.add('active');
+});
+document.getElementById('mob-btn-notifs').addEventListener('click', () => {
+  if (!ME) { openModal('login'); return; }
+  closeMobSidebar(); showView('notifs');
+  document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mob-btn-notifs').classList.add('active');
+});
+document.getElementById('mob-btn-post').addEventListener('click', () => {
+  if (!ME) { openModal('login'); return; }
+  closeMobSidebar(); showView('feed');
+  setTimeout(() => document.getElementById('comp-text').focus(), 100);
+});
+
+// Sync badge notif sur bottom nav
+const origCheckNotifs = checkUnreadNotifs;
+async function checkUnreadNotifsMob() {
+  await origCheckNotifs();
+  // Copier le badge sur la bottom nav
+  const badge = document.getElementById('notif-count');
+  const mobBadge = document.getElementById('mob-notif-badge');
+  if (badge && mobBadge) {
+    if (badge.classList.contains('hidden')) {
+      mobBadge.classList.add('hidden');
+    } else {
+      mobBadge.textContent = badge.textContent;
+      mobBadge.classList.remove('hidden');
+    }
+  }
+}
+// Overwrite
+window.checkUnreadNotifs = checkUnreadNotifsMob;
+
+// Fermer sidebar quand on clique sur un lien nav
+document.querySelectorAll('.ni[data-view]').forEach(btn => {
+  const orig = btn.onclick;
+  btn.addEventListener('click', () => {
+    if (window.innerWidth <= 720) closeMobSidebar();
+  });
+});
+
+// ═══════════════════════════════════════════
+// ── DISCORD OAUTH ──
+// ═══════════════════════════════════════════
+async function loginWithDiscord() {
+  const { error } = await db.auth.signInWithOAuth({
+    provider: 'discord',
+    options: {
+      redirectTo: window.location.origin + '/',
+      scopes: 'identify email',
+    }
+  });
+  if (error) showToast('Erreur Discord : ' + error.message);
+}
+
+document.getElementById('btn-discord-login').addEventListener('click', loginWithDiscord);
+
+// Gérer le callback OAuth (fragment URL)
+async function handleOAuthCallback() {
+  const hash = window.location.hash;
+  if (hash.includes('access_token') || hash.includes('error')) {
+    // Supabase gère automatiquement le token depuis le hash
+    const { data: { session } } = await db.auth.getSession();
+    if (session) {
+      // Créer le profil Discord si premier login
+      await ensureDiscordProfile(session.user);
+      window.location.hash = '';
+    }
+  }
+}
+
+async function ensureDiscordProfile(user) {
+  if (!user) return;
+  const { data: existing } = await db.from('profiles').select('id').eq('id', user.id).single();
+  if (!existing) {
+    // Nouveau compte Discord — créer le profil
+    const discordName = user.user_metadata?.full_name || user.user_metadata?.name || 'Voyageur';
+    const discordAvatar = user.user_metadata?.avatar_url || null;
+    const pseudo = discordName.replace(/[^a-zA-Z0-9_\u00C0-\u00FF]/g, '').slice(0, 20) || 'Voyageur';
+    await db.from('profiles').upsert({
+      id: user.id,
+      pseudo: pseudo,
+      avatar_url: discordAvatar,
+      role_badge: '🌙 Novice',
+      role: 'user'
+    }, { onConflict: 'id' });
+  }
+}
+
+// ═══════════════════════════════════════════
+// ── TAILLE DE POLICE ──
+// ═══════════════════════════════════════════
+function initFontSize() {
+  const saved = localStorage.getItem('leveil-font') || 'md';
+  applyFontSize(saved);
+  // Mettre à jour les boutons si settings est ouvert
+  document.querySelectorAll('.font-opt').forEach(b => {
+    b.classList.toggle('active', b.dataset.font === saved);
+  });
+}
+
+function applyFontSize(size) {
+  const sizes = { sm: '14px', md: '16px', lg: '18px', xl: '20px' };
+  document.documentElement.style.fontSize = sizes[size] || '16px';
+  localStorage.setItem('leveil-font', size);
+  document.querySelectorAll('.font-opt').forEach(b => {
+    b.classList.toggle('active', b.dataset.font === size);
+  });
+}
+
+document.querySelectorAll('.font-opt').forEach(btn => {
+  btn.addEventListener('click', () => applyFontSize(btn.dataset.font));
+});
+
+registerSW();initTheme();initFontSize();handleOAuthCallback();showTrending();initAuth();loadFeed();
 // Afficher landing si non connecté après 800ms
 setTimeout(async()=>{
   const {data:{session}}=await db.auth.getSession();
