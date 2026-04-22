@@ -618,7 +618,6 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
     box-shadow:4px 0 32px rgba(0,0,0,.4);
   }
   .sl.mob-open{transform:translateX(0);}
-  .mob-overlay{display:block!important;}
   /* Centre prend toute la largeur */
   .center{max-width:100vw;border-right:none;}
   /* Barre nav bas */
@@ -1071,6 +1070,23 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
             <button class="font-opt" data-font="xl" style="font-size:1.3rem;">A<small class="font-opt-lbl">Très grand</small></button>
           </div>
           <div style="height:.6rem;"></div>
+        </div>
+      </div>
+
+      <!-- Connexions -->
+      <div class="settings-section">
+        <div class="settings-section-title">🔗 Comptes liés</div>
+        <div class="settings-card">
+          <div class="sc-row">
+            <div>
+              <div class="sc-label" style="display:flex;align-items:center;gap:.5rem;">
+                <svg width="16" height="16" viewBox="0 0 127.14 96.36" fill="#5865F2"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+                Discord
+              </div>
+              <div class="sc-sub" id="discord-link-status">Vérification…</div>
+            </div>
+            <button class="bsm" id="btn-discord-link">Lier</button>
+          </div>
         </div>
       </div>
 
@@ -3309,6 +3325,66 @@ async function loadSettings() {
     document.getElementById('notif-follows').checked  = p.notif_follows  !== false;
     document.getElementById('notif-messages').checked = p.notif_messages !== false;
   }
+
+  // Statut Discord
+  await checkDiscordLink();
+
+  // Taille police active
+  const savedFont = localStorage.getItem('leveil-font') || 'md';
+  document.querySelectorAll('.font-opt').forEach(b => b.classList.toggle('active', b.dataset.font === savedFont));
+}
+
+async function checkDiscordLink() {
+  const statusEl = document.getElementById('discord-link-status');
+  const btn = document.getElementById('btn-discord-link');
+  if (!statusEl || !btn) return;
+  try {
+    const { data: { identities } } = await db.auth.getUserIdentities();
+    const hasDiscord = identities?.some(i => i.provider === 'discord');
+    if (hasDiscord) {
+      const discordId = identities.find(i => i.provider === 'discord');
+      statusEl.textContent = '✓ Lié — ' + (discordId?.identity_data?.full_name || 'Compte Discord');
+      statusEl.style.color = 'var(--mint)';
+      btn.textContent = 'Délier';
+      btn.className = 'bsm bsm-r';
+      btn.onclick = unlinkDiscord;
+    } else {
+      statusEl.textContent = 'Non lié';
+      statusEl.style.color = '';
+      btn.textContent = 'Lier';
+      btn.className = 'bsm bsm-p';
+      btn.onclick = linkDiscord;
+    }
+  } catch(e) {
+    statusEl.textContent = 'Non disponible';
+    btn.style.display = 'none';
+  }
+}
+
+async function linkDiscord() {
+  const { error } = await db.auth.linkIdentity({
+    provider: 'discord',
+    options: {
+      redirectTo: window.location.origin + '/?settings=1',
+      scopes: 'identify email',
+    }
+  });
+  if (error) showToast('Erreur : ' + error.message);
+}
+
+async function unlinkDiscord() {
+  if (!confirm('Délier ton compte Discord ? Tu pourras toujours te connecter avec ton pseudo.')) return;
+  try {
+    const { data: { identities } } = await db.auth.getUserIdentities();
+    const discordId = identities?.find(i => i.provider === 'discord');
+    if (!discordId) return;
+    const { error } = await db.auth.unlinkIdentity(discordId);
+    if (error) throw error;
+    showToast('✓ Discord délié');
+    await checkDiscordLink();
+  } catch(e) {
+    showToast('Erreur : ' + e.message);
+  }
 }
 
 // Changer mot de passe
@@ -3505,13 +3581,17 @@ document.getElementById('btn-discord-login').addEventListener('click', loginWith
 // Gérer le callback OAuth (fragment URL)
 async function handleOAuthCallback() {
   const hash = window.location.hash;
+  const params = new URLSearchParams(window.location.search);
   if (hash.includes('access_token') || hash.includes('error')) {
-    // Supabase gère automatiquement le token depuis le hash
     const { data: { session } } = await db.auth.getSession();
     if (session) {
-      // Créer le profil Discord si premier login
       await ensureDiscordProfile(session.user);
       window.location.hash = '';
+      // Si retour depuis liaison Discord dans settings
+      if (params.get('settings') === '1') {
+        history.replaceState({}, '', '/');
+        setTimeout(() => showView('settings'), 800);
+      }
     }
   }
 }
