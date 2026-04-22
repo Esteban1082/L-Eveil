@@ -2512,6 +2512,13 @@ function makeReportCard(r) {
     acts.appendChild(btnGo);
   }
 
+  // Bouton supprimer le signalement
+  const btnDelReport = document.createElement('button');
+  btnDelReport.className = 'rc-btn danger';
+  btnDelReport.textContent = '🗑️ Supprimer signalement';
+  btnDelReport.addEventListener('click', () => deleteReport(r.id, el));
+  acts.appendChild(btnDelReport);
+
   el.append(header, meta, body, preview, acts);
   return el;
 }
@@ -3958,6 +3965,7 @@ async function loadAdminFeedback() {
         ${f.status==='new'?`<button class="rc-btn" onclick="updateFeedbackStatus('${f.id}','read',this)">👁️ Lu</button>`:''}
         ${f.status!=='done'?`<button class="rc-btn success" onclick="updateFeedbackStatus('${f.id}','done',this)">✓ Traité</button>`:''}
         ${f.status!=='dismissed'?`<button class="rc-btn danger" onclick="updateFeedbackStatus('${f.id}','dismissed',this)">✕ Ignorer</button>`:''}
+        <button class="rc-btn danger" onclick="deleteFeedback('${f.id}',this)">🗑️ Supprimer</button>
       </div>`;
     list.appendChild(el);
   });
@@ -3968,6 +3976,25 @@ async function updateFeedbackStatus(id, status, btn) {
   if (error) { showToast('Erreur : ' + error.message); return; }
   showToast('✓ Statut mis à jour');
   loadAdminFeedback();
+}
+
+async function deleteFeedback(id, btn) {
+  if (!confirm('Supprimer definitvement cet avis ?')) return;
+  const card = btn.closest('.report-card');
+  const { error } = await db.from('feedback').delete().eq('id', id);
+  if (error) { showToast('Erreur : ' + error.message); return; }
+  if (card) { card.style.opacity = '0'; card.style.transition = 'opacity .3s'; setTimeout(() => card.remove(), 300); }
+  showToast('Avis supprime');
+  checkFeedbackBadge();
+}
+
+async function deleteReport(reportId, cardEl) {
+  if (!confirm('Supprimer definitivement ce signalement ?')) return;
+  const { error } = await db.from('reports').delete().eq('id', reportId);
+  if (error) { showToast('Erreur : ' + error.message); return; }
+  if (cardEl) { cardEl.style.opacity = '0'; cardEl.style.transition = 'opacity .3s'; setTimeout(() => cardEl.remove(), 300); }
+  showToast('Signalement supprime');
+  checkPendingReports();
 }
 
 // ── Badge feedback (séparé pour éviter récursion) ──
