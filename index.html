@@ -995,6 +995,9 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
       </div>
       <div id="admin-users-list"><div class="floader">Chargement…</div></div>
     </div>
+    <div id="admin-feedback-view" class="hidden">
+      <div id="admin-feedback-list"><div class="floader">Chargement…</div></div>
+    </div>
   </div>
 
 
@@ -1211,10 +1214,7 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 
       <div style="height:2rem;"></div>
     </div>
-  
-    <div id="admin-feedback-view" class="hidden">
-      <div id="admin-feedback-list"><div class="floader">Chargement…</div></div>
-    </div>
+
 </div>
 
 </main>
@@ -3871,23 +3871,31 @@ function _addTranslateBtnCore(p, acts, contEl, contElResolver) {
     // Traduire par chunks si texte long (limite API 500 chars)
     const text = p.content || '';
     let result;
-    if (text.length <= 490) {
-      result = await translateText(text, targetLang);
-    } else {
-      // Couper en phrases et traduire par blocs
-      const chunks = [];
-      let current = '';
-      for (const sentence of text.split(/(?<=[.!?])\s+/)) {
-        if ((current + sentence).length > 490) {
-          if (current) chunks.push(current.trim());
-          current = sentence;
-        } else {
-          current += (current ? ' ' : '') + sentence;
-        }
+    // Découper en blocs de 490 chars max (limite API MyMemory)
+    const chunks = [];
+    let remaining = text;
+    while (remaining.length > 0) {
+      if (remaining.length <= 490) {
+        chunks.push(remaining);
+        break;
       }
-      if (current) chunks.push(current.trim());
-      const results = await Promise.all(chunks.map(c => translateText(c, targetLang)));
-      result = results.filter(Boolean).join(' ') || null;
+      // Couper à 490 en cherchant un espace avant
+      let cut = 490;
+      while (cut > 400 && remaining[cut] !== ' ') cut--;
+      chunks.push(remaining.slice(0, cut).trim());
+      remaining = remaining.slice(cut).trim();
+    }
+    if (chunks.length === 1) {
+      result = await translateText(chunks[0], targetLang);
+    } else {
+      // Traduire séquentiellement pour respecter la limite de rate
+      const results = [];
+      for (const chunk of chunks) {
+        const r = await translateText(chunk, targetLang);
+        results.push(r || chunk); // fallback: garder l'original si échec
+        if (chunks.length > 1) await new Promise(res => setTimeout(res, 300)); // pause entre appels
+      }
+      result = results.join(' ');
     }
     transBtn.disabled = false;
     if (!result) { showToast('Traduction indisponible.'); transBtn.innerHTML = `🌐 <span>${langLabel}</span>`; return; }
