@@ -983,7 +983,7 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
       <div class="ftabs">
         <button class="ftab active" data-rtab="reports">Signalements</button>
         <button class="ftab" data-rtab="feedback">Avis <span class="ni-badge hidden" id="feedback-count" style="position:relative;right:auto;margin-left:.3rem;">0</span></button>
-        <button class="ftab" data-rtab="users">Utilisateurs</button>
+        <button class="ftab" data-rtab="users" id="admin-users-tab">Utilisateurs</button>
       </div>
     </div>
     <div id="admin-reports-view">
@@ -2413,6 +2413,9 @@ async function checkAdminRole() {
     navAdmin.classList.remove('hidden');
     checkPendingReports();
     checkFeedbackBadge();
+    // Onglet Utilisateurs : admins seulement
+    const usersTab = document.getElementById('admin-users-tab');
+    if (usersTab) usersTab.style.display = MY_ROLE === 'admin' ? '' : 'none';
   } else {
     navAdmin.classList.add('hidden');
   }
