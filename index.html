@@ -544,6 +544,20 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 .font-opt.active{background:rgba(232,168,124,.15);color:var(--a);border-color:var(--a);font-weight:500;}
 .font-opt-lbl{display:block;font-size:.65rem;color:var(--m);margin-top:.2rem;}
 
+
+/* ── FEEDBACK MODAL ── */
+.feedback-types{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ftype{flex:1;min-width:80px;padding:.55rem .5rem;border-radius:10px;border:1px solid var(--b);background:var(--sa);color:var(--m);font-family:var(--f);font-size:.78rem;cursor:pointer;text-align:center;transition:all .2s;}
+.ftype:hover{border-color:var(--a);color:var(--a);}
+.ftype.sel{background:rgba(232,168,124,.12);color:var(--a);border-color:var(--a);font-weight:500;}
+.ftype-icon{display:block;font-size:1.2rem;margin-bottom:.25rem;}
+
+/* ── TRANSLATE BUTTON ── */
+.pa-translate{color:var(--sky)!important;}
+.pa-translate:hover{background:rgba(122,171,204,.1)!important;}
+.translated-text{font-size:.83rem;color:var(--sky);line-height:1.65;margin-top:.5rem;padding:.6rem .8rem;background:rgba(122,171,204,.06);border-radius:8px;border-left:2px solid var(--sky);white-space:pre-wrap;}
+.translate-credit{font-size:.65rem;color:var(--fa);margin-top:.25rem;}
+
 /* ── ADMIN ── */
 .report-card{padding:1rem 1.25rem;border-bottom:1px solid var(--b);transition:background .15s;}
 .report-card:hover{background:var(--sh);}
@@ -694,6 +708,7 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
         <button class="tbtn" id="tbtn2">☀</button>
       </div>
       <button class="ni" data-view="settings" data-auth="1"><span class="ni-icon">⚙️</span><span class="ni-label">Paramètres</span></button>
+      <button class="ni" id="btn-feedback"><span class="ni-icon">💡</span><span class="ni-label">Donner un avis</span></button>
       <button class="ni" id="btn-logout"><span class="ni-icon">🚪</span><span class="ni-label">Déconnexion</span></button>
     </div>
   </div>
@@ -1372,6 +1387,33 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
   </div>
 </div>
 
+
+<!-- ════ MODAL FEEDBACK ════ -->
+<div class="mov" id="feedback-modal">
+  <div class="modal">
+    <button class="mclose" id="btn-feedback-close">✕</button>
+    <div class="mlogo" style="margin-bottom:.3rem;">💡 Donner un avis</div>
+    <p class="msub">Ton retour aide à améliorer L'Éveil. Merci de prendre le temps ✨</p>
+    <div class="feedback-types" id="feedback-types">
+      <button class="ftype" data-type="bug"><span class="ftype-icon">🐛</span>Bug</button>
+      <button class="ftype" data-type="amelioration"><span class="ftype-icon">✨</span>Amélioration</button>
+      <button class="ftype" data-type="suggestion"><span class="ftype-icon">💡</span>Suggestion</button>
+      <button class="ftype" data-type="autre"><span class="ftype-icon">💬</span>Autre</button>
+    </div>
+    <div class="fg">
+      <label class="fl">Ton message *</label>
+      <textarea class="fi" id="feedback-text" rows="5" placeholder="Décris ton retour aussi précisément que possible…" style="resize:vertical;"></textarea>
+    </div>
+    <div class="fg">
+      <label class="fl">Contact (optionnel)</label>
+      <input type="text" class="fi" id="feedback-contact" placeholder="Pseudo ou Discord pour qu'on puisse te répondre"/>
+    </div>
+    <button class="fsub" id="btn-feedback-submit">Envoyer mon avis</button>
+    <div class="fok hidden" id="feedback-ok">✓ Merci pour ton retour ! On le lira avec attention 🌙</div>
+    <div class="ferr hidden" id="feedback-err"></div>
+  </div>
+</div>
+
 <div class="lightbox" id="lightbox"><img id="lightbox-img" src="" alt=""/></div>
 <div class="toast" id="toast"></div>
 
@@ -1675,6 +1717,9 @@ function makePost(p){
     delBtn.addEventListener('click',()=>deletePost(p.id,el));
     acts.append(editBtn,delBtn);
   }
+
+  // Bouton traduction
+  addTranslateBtn(p, acts);
 
   body.append(head,cont,ez);if(imgEl)body.appendChild(imgEl);body.appendChild(acts);
   el.append(av,body);return el;
@@ -3663,6 +3708,137 @@ function applyFontSize(size) {
 document.querySelectorAll('.font-opt').forEach(btn => {
   btn.addEventListener('click', () => applyFontSize(btn.dataset.font));
 });
+
+
+// ═══════════════════════════════════════════
+// ── FEEDBACK ──
+// ═══════════════════════════════════════════
+let FEEDBACK_TYPE = null;
+
+document.getElementById('btn-feedback').addEventListener('click', () => {
+  FEEDBACK_TYPE = null;
+  document.getElementById('feedback-text').value = '';
+  document.getElementById('feedback-contact').value = '';
+  document.getElementById('feedback-ok').classList.add('hidden');
+  document.getElementById('feedback-err').classList.add('hidden');
+  document.querySelectorAll('.ftype').forEach(b => b.classList.remove('sel'));
+  openModal('feedback-modal');
+  if (window.innerWidth <= 720) closeMobSidebar();
+});
+document.getElementById('btn-feedback-close').addEventListener('click', () => closeModal('feedback-modal'));
+document.getElementById('feedback-modal').addEventListener('click', e => { if(e.target.id==='feedback-modal') closeModal('feedback-modal'); });
+
+document.querySelectorAll('.ftype').forEach(btn => {
+  btn.addEventListener('click', () => {
+    FEEDBACK_TYPE = btn.dataset.type;
+    document.querySelectorAll('.ftype').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+  });
+});
+
+document.getElementById('btn-feedback-submit').addEventListener('click', async () => {
+  const msg = document.getElementById('feedback-text').value.trim();
+  const contact = document.getElementById('feedback-contact').value.trim();
+  const errEl = document.getElementById('feedback-err');
+  const okEl = document.getElementById('feedback-ok');
+  errEl.classList.add('hidden'); okEl.classList.add('hidden');
+  if (!FEEDBACK_TYPE) { errEl.textContent = 'Choisis un type de retour.'; errEl.classList.remove('hidden'); return; }
+  if (!msg || msg.length < 10) { errEl.textContent = 'Message trop court (10 min).'; errEl.classList.remove('hidden'); return; }
+  const btn = document.getElementById('btn-feedback-submit');
+  btn.disabled = true; btn.textContent = 'Envoi…';
+  const { error } = await db.from('feedback').insert({
+    user_id: ME?.id || null,
+    type: FEEDBACK_TYPE,
+    message: msg,
+    contact: contact || null
+  });
+  btn.disabled = false; btn.textContent = 'Envoyer mon avis';
+  if (error) { errEl.textContent = 'Erreur : ' + error.message; errEl.classList.remove('hidden'); }
+  else {
+    okEl.classList.remove('hidden');
+    document.getElementById('feedback-text').value = '';
+    document.getElementById('feedback-contact').value = '';
+    FEEDBACK_TYPE = null;
+    document.querySelectorAll('.ftype').forEach(b => b.classList.remove('sel'));
+    setTimeout(() => closeModal('feedback-modal'), 2500);
+  }
+});
+
+// ── Feedback dans la page admin (onglet supplémentaire) ──
+// (On l'ajoute à l'onglet admin existant)
+
+// ═══════════════════════════════════════════
+// ── TRADUCTION DES POSTS ──
+// ═══════════════════════════════════════════
+
+// Cache des traductions pour éviter les appels répétés
+const TRANSLATE_CACHE = new Map();
+
+// Détecter la langue navigateur
+const USER_LANG = (navigator.language || 'fr').split('-')[0];
+
+async function translateText(text, targetLang) {
+  const cacheKey = `${text.slice(0, 40)}_${targetLang}`;
+  if (TRANSLATE_CACHE.has(cacheKey)) return TRANSLATE_CACHE.get(cacheKey);
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 500))}&langpair=fr|${targetLang}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.responseStatus === 200) {
+      const translated = data.responseData.translatedText;
+      TRANSLATE_CACHE.set(cacheKey, translated);
+      return translated;
+    }
+    return null;
+  } catch(e) {
+    return null;
+  }
+}
+
+// Ajouter bouton traduction sur un post
+function addTranslateBtn(p, acts) {
+  // Pas de bouton si même langue ou post de démo
+  if (String(p.id).startsWith('d')) return;
+  const targetLang = USER_LANG === 'fr' ? 'en' : 'fr';
+  const langLabel = USER_LANG === 'fr' ? 'EN' : 'FR';
+
+  const transBtn = document.createElement('button');
+  transBtn.className = 'pa pa-translate';
+  transBtn.innerHTML = `🌐 <span>${langLabel}</span>`;
+  transBtn.title = `Traduire en ${langLabel}`;
+
+  let translated = false;
+  let transEl = null;
+
+  transBtn.addEventListener('click', async () => {
+    if (translated && transEl) {
+      // Toggle : masquer/afficher
+      transEl.style.display = transEl.style.display === 'none' ? '' : 'none';
+      transBtn.innerHTML = transEl.style.display === 'none' ? `🌐 <span>${langLabel}</span>` : `🌐 <span>↩</span>`;
+      return;
+    }
+    transBtn.innerHTML = '⏳';
+    transBtn.disabled = true;
+    const result = await translateText(p.content, targetLang);
+    transBtn.disabled = false;
+    if (!result) { showToast('Traduction indisponible.'); transBtn.innerHTML = `🌐 <span>${langLabel}</span>`; return; }
+    // Insérer la traduction sous le contenu
+    const cont = document.getElementById('cont-' + p.id);
+    if (!cont) return;
+    transEl = document.createElement('div');
+    transEl.className = 'translated-text';
+    transEl.textContent = result;
+    const credit = document.createElement('div');
+    credit.className = 'translate-credit';
+    credit.textContent = `Traduit en ${targetLang.toUpperCase()} via MyMemory`;
+    cont.after(transEl);
+    transEl.after(credit);
+    translated = true;
+    transBtn.innerHTML = `🌐 <span>↩</span>`;
+  });
+
+  acts.appendChild(transBtn);
+}
 
 registerSW();initTheme();initFontSize();handleOAuthCallback();showTrending();initAuth();loadFeed();
 // Afficher landing si non connecté après 800ms
