@@ -3921,7 +3921,7 @@ async function loadAdminFeedback() {
     .limit(100);
   list.innerHTML = '';
   if (error) { list.innerHTML = '<div class="fempty">Erreur : ' + error.message + '</div>'; return; }
-  if (!data || data.length === 0) { list.innerHTML = '<div class="fempty">Aucun avis pour l'instant.</div>'; return; }
+  if (!data || data.length === 0) { list.innerHTML = '<div class="fempty">Aucun avis pour l\'instant.</div>'; return; }
 
   // Badge count nouveaux
   const newCount = data.filter(f => f.status === 'new').length;
