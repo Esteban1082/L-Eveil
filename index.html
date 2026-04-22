@@ -7,6 +7,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#E8A87C"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="L'Éveil"/>
+<link rel="apple-touch-icon" href="/icon-192.png"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root{--f:'DM Sans',sans-serif;--fd:'Cormorant Garamond',serif;--a:#E8A87C;--ah:#D4956A;--rose:#C47B8A;--mint:#8BA888;--gold:#C9A96E;--sky:#7AABCC;--lav:#9B8EC4;}
@@ -461,6 +467,19 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 .lpp-ht{color:var(--a);}
 @media(max-width:640px){.landing-features{grid-template-columns:1fr;}.landing-stats{gap:1.5rem;}}
 
+
+/* ── SETTINGS ── */
+.settings-body{padding:1rem 1.25rem;}
+.settings-section{margin-bottom:1.5rem;}
+.settings-section-title{font-size:.7rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:.6rem;padding:0 .1rem;}
+.settings-card{background:var(--sa);border:1px solid var(--b);border-radius:16px;overflow:hidden;}
+.sc-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.9rem 1rem;}
+.sc-label{font-size:.87rem;font-weight:500;color:var(--t);}
+.sc-sub{font-size:.75rem;color:var(--m);margin-top:.15rem;line-height:1.4;}
+.sc-sep{height:1px;background:var(--b);margin:0 1rem;}
+.settings-card .fg{padding:0 1rem .6rem;}
+.settings-card .bsm{margin:.6rem 1rem;}
+
 /* ── ADMIN ── */
 .report-card{padding:1rem 1.25rem;border-bottom:1px solid var(--b);transition:background .15s;}
 .report-card:hover{background:var(--sh);}
@@ -567,6 +586,7 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
         <div class="umini-info"><div class="uname" id="u-name">—</div><div class="urole" id="u-badge">🌙 Novice</div></div>
         <button class="tbtn" id="tbtn2">☀</button>
       </div>
+      <button class="ni" data-view="settings" data-auth="1"><span class="ni-icon">⚙️</span><span class="ni-label">Paramètres</span></button>
       <button class="ni" id="btn-logout"><span class="ni-icon">🚪</span><span class="ni-label">Déconnexion</span></button>
     </div>
   </div>
@@ -927,6 +947,115 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
     </div>
   </div>
 
+  <!-- ── PARAMÈTRES ── -->
+  <div class="view" id="view-settings">
+    <div class="sticky-hdr">
+      <div class="fhdr-row">
+        <button class="back-btn" id="btn-settings-back">←</button>
+        <div class="fhdr-title">Paramètres</div>
+      </div>
+    </div>
+    <div class="settings-body" id="settings-body">
+
+      <!-- Sécurité -->
+      <div class="settings-section">
+        <div class="settings-section-title">🔐 Sécurité</div>
+        <div class="settings-card">
+          <div class="sc-row">
+            <div class="sc-label">Changer le mot de passe</div>
+          </div>
+          <div class="fg" style="margin-top:.75rem;">
+            <label class="fl">Nouveau mot de passe</label>
+            <input type="password" class="fi" id="set-new-pass" placeholder="6 caractères minimum" autocomplete="new-password"/>
+          </div>
+          <div class="fg">
+            <label class="fl">Confirmer</label>
+            <input type="password" class="fi" id="set-conf-pass" placeholder="Répéter" autocomplete="new-password"/>
+          </div>
+          <button class="bsm bsm-p" id="btn-change-pass" style="width:100%;padding:.65rem;">Mettre à jour</button>
+          <div class="ferr" id="pass-err"></div>
+          <div class="fok" id="pass-ok"></div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="settings-section">
+        <div class="settings-section-title">🔔 Notifications</div>
+        <div class="settings-card">
+          <div class="sc-row" id="push-status-row">
+            <div>
+              <div class="sc-label">Notifications push</div>
+              <div class="sc-sub" id="push-status-txt">Chargement…</div>
+            </div>
+            <button class="bsm" id="btn-push-toggle" style="flex-shrink:0;">Activer</button>
+          </div>
+          <div class="sc-sep"></div>
+          <div class="sc-row">
+            <div><div class="sc-label">J'aime sur mes posts</div></div>
+            <label class="toggle"><input type="checkbox" id="notif-likes" checked/><span class="toggle-slider"></span></label>
+          </div>
+          <div class="sc-row">
+            <div><div class="sc-label">Commentaires sur mes posts</div></div>
+            <label class="toggle"><input type="checkbox" id="notif-comments" checked/><span class="toggle-slider"></span></label>
+          </div>
+          <div class="sc-row">
+            <div><div class="sc-label">Nouveaux abonnés</div></div>
+            <label class="toggle"><input type="checkbox" id="notif-follows" checked/><span class="toggle-slider"></span></label>
+          </div>
+          <div class="sc-row">
+            <div><div class="sc-label">Messages directs</div></div>
+            <label class="toggle"><input type="checkbox" id="notif-messages" checked/><span class="toggle-slider"></span></label>
+          </div>
+          <button class="bsm bsm-p" id="btn-save-notif-prefs" style="width:100%;padding:.65rem;margin-top:.5rem;">Sauvegarder</button>
+        </div>
+      </div>
+
+      <!-- Installer l'app -->
+      <div class="settings-section" id="pwa-install-section" style="display:none;">
+        <div class="settings-section-title">📱 Application</div>
+        <div class="settings-card">
+          <div class="sc-row">
+            <div>
+              <div class="sc-label">Installer L'Éveil</div>
+              <div class="sc-sub">Ajouter à l'écran d'accueil pour un accès rapide</div>
+            </div>
+            <button class="bsm bsm-p" id="btn-pwa-install">Installer</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Données -->
+      <div class="settings-section">
+        <div class="settings-section-title">📦 Mes données</div>
+        <div class="settings-card">
+          <div class="sc-row">
+            <div>
+              <div class="sc-label">Exporter mes données</div>
+              <div class="sc-sub">Télécharger une copie de tous tes posts, commentaires et journal</div>
+            </div>
+            <button class="bsm bsm-g" id="btn-export-data">Exporter</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="settings-section">
+        <div class="settings-section-title" style="color:var(--red);">⚠️ Zone danger</div>
+        <div class="settings-card" style="border-color:rgba(196,123,138,.3);">
+          <div class="sc-row">
+            <div>
+              <div class="sc-label">Désactiver mon compte</div>
+              <div class="sc-sub">Tes posts seront masqués et tes données anonymisées. Irréversible.</div>
+            </div>
+            <button class="bsm bsm-r" id="btn-delete-account">Supprimer</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:2rem;"></div>
+    </div>
+  </div>
+
 </main>
 
 <!-- ════ SIDEBAR DROITE ════ -->
@@ -1130,6 +1259,7 @@ function showView(id){
   if(id==='biblio'){showBiblioList();loadBiblio();}
   if(id==='admin'){if(ADMIN_TAB==='reports')loadAdminReports();else loadAdminUsers();}
   if(id==='chat')initChatView();
+  if(id==='settings')loadSettings();
 }
 
 // ── AUTH ──
@@ -2658,6 +2788,12 @@ async function loadDMMessages(convId){
 function appendDMMessage(m,scroll=true){
   const msgs=document.getElementById('dm-msgs');if(!msgs)return;
   const isMine=m.sender_id===ME.id;
+  // Notif navigateur si message reçu et app en arrière-plan
+  if(!isMine && document.hidden && Notification.permission==='granted'){
+    const pseudo=m.profiles?.pseudo||'Quelqu\'un';
+    new Notification("L'Éveil ✦ "+pseudo, {body:m.content||'📷 Photo',icon:'/icon-192.png',tag:'dm-'+m.conversation_id});
+  }
+  if(!isMine) checkUnreadDMs();
   const row=document.createElement('div');row.className='msg-row'+(isMine?' mine':'');
   const av=document.createElement('div');av.className='av sm';av.style.cssText='flex-shrink:0;align-self:flex-end;';
   if(!isMine) setAvEl(av,m.profiles?.avatar_url,m.profiles?.pseudo||'?');
@@ -2896,7 +3032,239 @@ document.getElementById('landing-signup').addEventListener('click',()=>openModal
 document.getElementById('landing-login').addEventListener('click',()=>openModal('login'));
 document.getElementById('landing-signup-2').addEventListener('click',()=>openModal('signup'));
 
-initTheme();showTrending();initAuth();loadFeed();
+
+// ═══════════════════════════════════════════
+// ── PWA ──
+// ═══════════════════════════════════════════
+
+// VAPID Public Key — Remplace par ta clé VAPID publique
+// Génère tes clés sur : https://vapidkeys.com
+// ou avec : npx web-push generate-vapid-keys
+const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+
+let deferredInstallPrompt = null;
+
+// Enregistrement du Service Worker
+async function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    console.log('[SW] Enregistré:', reg.scope);
+    // Écouter les mises à jour
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          showToast('✦ Mise à jour disponible — actualise la page');
+        }
+      });
+    });
+  } catch (err) {
+    console.warn('[SW] Erreur:', err);
+  }
+}
+
+// Prompt d'installation PWA
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const section = document.getElementById('pwa-install-section');
+  if (section) section.style.display = 'block';
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  showToast('✓ L\'Éveil est installé sur ton appareil !');
+  const section = document.getElementById('pwa-install-section');
+  if (section) section.style.display = 'none';
+});
+
+// ═══════════════════════════════════════════
+// ── PUSH NOTIFICATIONS ──
+// ═══════════════════════════════════════════
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function getPushStatus() {
+  if (!('PushManager' in window)) return 'unsupported';
+  if (!('serviceWorker' in navigator)) return 'unsupported';
+  const perm = Notification.permission;
+  if (perm === 'denied') return 'denied';
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  if (sub) return 'subscribed';
+  return 'unsubscribed';
+}
+
+async function subscribePush() {
+  if (!ME) { openModal('login'); return; }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    const keys = sub.toJSON().keys;
+    await db.from('push_subscriptions').upsert({
+      user_id: ME.id,
+      endpoint: sub.endpoint,
+      p256dh: keys.p256dh,
+      auth_key: keys.auth,
+      user_agent: navigator.userAgent.slice(0, 200)
+    }, { onConflict: 'user_id,endpoint' });
+    showToast('✓ Notifications push activées !');
+    updatePushUI('subscribed');
+  } catch (err) {
+    console.warn('[Push] Erreur:', err);
+    if (Notification.permission === 'denied') {
+      showToast('Notifications bloquées — autorise-les dans les paramètres du navigateur');
+    } else {
+      showToast('Erreur activation push : ' + err.message);
+    }
+  }
+}
+
+async function unsubscribePush() {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      await sub.unsubscribe();
+      await db.from('push_subscriptions').delete().eq('endpoint', sub.endpoint).eq('user_id', ME.id);
+    }
+    showToast('Notifications push désactivées');
+    updatePushUI('unsubscribed');
+  } catch (err) {
+    showToast('Erreur : ' + err.message);
+  }
+}
+
+function updatePushUI(status) {
+  const btn = document.getElementById('btn-push-toggle');
+  const txt = document.getElementById('push-status-txt');
+  if (!btn || !txt) return;
+  if (status === 'unsupported') {
+    txt.textContent = 'Non supporté sur ce navigateur';
+    btn.style.display = 'none';
+  } else if (status === 'denied') {
+    txt.textContent = 'Bloquées dans les paramètres du navigateur';
+    btn.textContent = 'Bloquées';
+    btn.disabled = true;
+  } else if (status === 'subscribed') {
+    txt.textContent = 'Activées sur cet appareil';
+    btn.textContent = 'Désactiver';
+    btn.className = 'bsm bsm-r';
+    btn.onclick = unsubscribePush;
+  } else {
+    txt.textContent = 'Désactivées';
+    btn.textContent = 'Activer';
+    btn.className = 'bsm bsm-p';
+    btn.onclick = subscribePush;
+  }
+}
+
+// ═══════════════════════════════════════════
+// ── PAGE PARAMÈTRES ──
+// ═══════════════════════════════════════════
+async function loadSettings() {
+  if (!ME) { showView('feed'); return; }
+
+  // Statut push
+  const status = await getPushStatus();
+  updatePushUI(status);
+
+  // Charger les préférences notifs
+  const { data: p } = await db.from('profiles').select('notif_likes,notif_comments,notif_follows,notif_messages').eq('id', ME.id).single();
+  if (p) {
+    document.getElementById('notif-likes').checked    = p.notif_likes    !== false;
+    document.getElementById('notif-comments').checked = p.notif_comments !== false;
+    document.getElementById('notif-follows').checked  = p.notif_follows  !== false;
+    document.getElementById('notif-messages').checked = p.notif_messages !== false;
+  }
+}
+
+// Changer mot de passe
+async function changePassword() {
+  const newPass = document.getElementById('set-new-pass').value;
+  const confPass = document.getElementById('set-conf-pass').value;
+  const errEl = document.getElementById('pass-err');
+  const okEl = document.getElementById('pass-ok');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!newPass || newPass.length < 6) { errEl.textContent = 'Minimum 6 caractères.'; errEl.classList.add('show'); return; }
+  if (newPass !== confPass) { errEl.textContent = 'Les mots de passe ne correspondent pas.'; errEl.classList.add('show'); return; }
+  const { error } = await db.auth.updateUser({ password: newPass });
+  if (error) { errEl.textContent = error.message; errEl.classList.add('show'); }
+  else {
+    okEl.textContent = '✓ Mot de passe mis à jour !'; okEl.classList.add('show');
+    document.getElementById('set-new-pass').value = '';
+    document.getElementById('set-conf-pass').value = '';
+  }
+}
+
+// Exporter données
+async function exportData() {
+  const btn = document.getElementById('btn-export-data');
+  btn.textContent = '…'; btn.disabled = true;
+  try {
+    const { data, error } = await db.rpc('export_my_data');
+    if (error) throw error;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leveil-export-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✓ Export téléchargé');
+  } catch (err) {
+    showToast('Erreur export : ' + err.message);
+  }
+  btn.textContent = 'Exporter'; btn.disabled = false;
+}
+
+// Supprimer compte
+async function deleteAccount() {
+  const confirmTxt = prompt('Tape "SUPPRIMER" pour confirmer la suppression de ton compte.');
+  if (confirmTxt !== 'SUPPRIMER') { showToast('Suppression annulée.'); return; }
+  const { error } = await db.rpc('delete_own_account');
+  if (error) { showToast('Erreur : ' + error.message); return; }
+  showToast('Compte supprimé. Au revoir 🌙');
+  setTimeout(() => db.auth.signOut(), 1500);
+}
+
+// Sauvegarder préférences notifs
+async function saveNotifPrefs() {
+  if (!ME) return;
+  const { error } = await db.from('profiles').update({
+    notif_likes:    document.getElementById('notif-likes').checked,
+    notif_comments: document.getElementById('notif-comments').checked,
+    notif_follows:  document.getElementById('notif-follows').checked,
+    notif_messages: document.getElementById('notif-messages').checked,
+  }).eq('id', ME.id);
+  if (!error) showToast('✓ Préférences sauvegardées');
+  else showToast('Erreur : ' + error.message);
+}
+
+// ── EVENT LISTENERS SETTINGS ──
+document.getElementById('btn-settings-back').addEventListener('click', () => showView('feed'));
+document.getElementById('btn-change-pass').addEventListener('click', changePassword);
+document.getElementById('btn-export-data').addEventListener('click', exportData);
+document.getElementById('btn-delete-account').addEventListener('click', deleteAccount);
+document.getElementById('btn-save-notif-prefs').addEventListener('click', saveNotifPrefs);
+document.getElementById('btn-pwa-install').addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if (outcome === 'accepted') showToast('✓ Installation lancée !');
+  deferredInstallPrompt = null;
+});
+
+registerSW();initTheme();showTrending();initAuth();loadFeed();
 // Afficher landing si non connecté après 800ms
 setTimeout(async()=>{
   const {data:{session}}=await db.auth.getSession();

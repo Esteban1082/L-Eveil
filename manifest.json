@@ -1,0 +1,57 @@
+{
+  "name": "L'Éveil — Monde Onirique",
+  "short_name": "L'Éveil",
+  "description": "Le réseau social des explorateurs oniriques — SHC, Rêves Lucides, Astrologie, Sorcellerie, Spiritisme",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#070C0A",
+  "theme_color": "#E8A87C",
+  "lang": "fr",
+  "categories": ["social", "lifestyle", "spirituality"],
+  "icons": [
+    {
+      "src": "/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Accueil",
+      "url": "/",
+      "description": "Voir le feed onirique"
+    },
+    {
+      "name": "Journal",
+      "url": "/?view=journal",
+      "description": "Mon journal onirique"
+    },
+    {
+      "name": "Groupes",
+      "url": "/?view=chat",
+      "description": "Groupes de discussion"
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "text": "share"
+    }
+  }
+}
