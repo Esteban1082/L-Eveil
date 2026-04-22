@@ -982,6 +982,7 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
       </div>
       <div class="ftabs">
         <button class="ftab active" data-rtab="reports">Signalements</button>
+        <button class="ftab" data-rtab="feedback">Avis <span class="ni-badge hidden" id="feedback-count" style="position:relative;right:auto;margin-left:.3rem;">0</span></button>
         <button class="ftab" data-rtab="users">Utilisateurs</button>
       </div>
     </div>
@@ -1210,7 +1211,11 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 
       <div style="height:2rem;"></div>
     </div>
-  </div>
+  
+    <div id="admin-feedback-view" class="hidden">
+      <div id="admin-feedback-list"><div class="floader">Chargement…</div></div>
+    </div>
+</div>
 
 </main>
 
@@ -1445,7 +1450,7 @@ function showView(id){
   if(id==='saved')loadSaved();
   if(id==='journal')loadJournal();
   if(id==='biblio'){showBiblioList();loadBiblio();}
-  if(id==='admin'){if(ADMIN_TAB==='reports')loadAdminReports();else loadAdminUsers();}
+  if(id==='admin'){if(ADMIN_TAB==='reports')loadAdminReports();else if(ADMIN_TAB==='feedback')loadAdminFeedback();else loadAdminUsers();}
   if(id==='chat')initChatView();
   if(id==='settings')loadSettings();
 }
@@ -2513,19 +2518,36 @@ function makeReportCard(r) {
 async function loadReportTarget(r, previewEl) {
   try {
     if (r.target_type === 'forum_post') {
-      const { data } = await db.from('forum_posts').select('content, profiles(pseudo)').eq('id', r.target_id).single();
-      if (data) previewEl.innerHTML = `<strong>@${esc(data.profiles?.pseudo || '?')}</strong> : ${esc((data.content || '').slice(0, 200))}${data.content?.length > 200 ? '…' : ''}`;
-      else previewEl.textContent = 'Contenu introuvable (peut-être déjà supprimé).';
+      // maybeSingle + pas de filtre is_deleted pour voir même les posts supprimés
+      const { data } = await db.from('forum_posts')
+        .select('content, is_deleted, profiles(pseudo)')
+        .eq('id', r.target_id)
+        .maybeSingle();
+      if (data) {
+        const prefix = data.is_deleted ? '<em style="color:var(--fa)">[Supprimé] </em>' : '';
+        previewEl.innerHTML = prefix + `<strong>@${esc(data.profiles?.pseudo || '?')}</strong> : ${esc((data.content || '').slice(0, 200))}${(data.content||'').length > 200 ? '…' : ''}`;
+      } else previewEl.textContent = 'Contenu introuvable.';
     } else if (r.target_type === 'comment') {
-      const { data } = await db.from('comments').select('content, profiles(pseudo)').eq('id', r.target_id).single();
-      if (data) previewEl.innerHTML = `<strong>@${esc(data.profiles?.pseudo || '?')}</strong> : ${esc((data.content || '').slice(0, 200))}`;
-      else previewEl.textContent = 'Commentaire introuvable.';
+      const { data } = await db.from('comments')
+        .select('content, is_deleted, profiles(pseudo)')
+        .eq('id', r.target_id)
+        .maybeSingle();
+      if (data) {
+        const prefix = data.is_deleted ? '<em style="color:var(--fa)">[Supprimé] </em>' : '';
+        previewEl.innerHTML = prefix + `<strong>@${esc(data.profiles?.pseudo || '?')}</strong> : ${esc((data.content || '').slice(0, 200))}`;
+      } else previewEl.textContent = 'Commentaire introuvable.';
     } else if (r.target_type === 'profile') {
-      const { data } = await db.from('profiles').select('pseudo, bio').eq('id', r.target_id).single();
+      const { data } = await db.from('profiles')
+        .select('pseudo, bio')
+        .eq('id', r.target_id)
+        .maybeSingle();
       if (data) previewEl.innerHTML = `<strong>@${esc(data.pseudo)}</strong>${data.bio ? ' : ' + esc(data.bio.slice(0, 150)) : ''}`;
       else previewEl.textContent = 'Profil introuvable.';
     }
-  } catch (e) { previewEl.textContent = 'Impossible de charger le contenu.'; }
+  } catch (e) {
+    console.error('loadReportTarget:', e);
+    previewEl.textContent = 'Erreur de chargement.';
+  }
 }
 
 async function updateReportStatus(reportId, status, cardEl) {
@@ -2611,7 +2633,10 @@ document.querySelectorAll('.ftab[data-rtab]').forEach(t => {
     t.classList.add('active');
     document.getElementById('admin-reports-view').classList.toggle('hidden', ADMIN_TAB !== 'reports');
     document.getElementById('admin-users-view').classList.toggle('hidden', ADMIN_TAB !== 'users');
+    const feedbackView = document.getElementById('admin-feedback-view');
+    if (feedbackView) feedbackView.classList.toggle('hidden', ADMIN_TAB !== 'feedback');
     if (ADMIN_TAB === 'reports') loadAdminReports();
+    else if (ADMIN_TAB === 'feedback') loadAdminFeedback();
     else loadAdminUsers();
   });
 });
@@ -3786,17 +3811,24 @@ const USER_LANG = (navigator.language || 'fr').split('-')[0];
 async function translateText(text, targetLang) {
   const cacheKey = `${text.slice(0, 40)}_${targetLang}`;
   if (TRANSLATE_CACHE.has(cacheKey)) return TRANSLATE_CACHE.get(cacheKey);
+  const srcLang = targetLang === 'en' ? 'fr' : 'fr';
+  const langpair = `${srcLang}|${targetLang}`;
   try {
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 500))}&langpair=fr|${targetLang}`;
-    const res = await fetch(url);
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 500))}&langpair=${langpair}&de=contact@leveil.app`;
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    if (data.responseStatus === 200) {
+    if (data.responseStatus === 200 && data.responseData?.translatedText) {
       const translated = data.responseData.translatedText;
+      // MyMemory renvoie parfois la même langue si détection échoue
+      if (translated.toLowerCase() === text.toLowerCase()) return null;
       TRANSLATE_CACHE.set(cacheKey, translated);
       return translated;
     }
+    console.warn('MyMemory:', data.responseStatus, data.responseDetails);
     return null;
   } catch(e) {
+    console.warn('Translation error:', e.message);
     return null;
   }
 }
@@ -3844,6 +3876,72 @@ function addTranslateBtn(p, acts) {
   });
 
   acts.appendChild(transBtn);
+}
+
+
+// ═══════════════════════════════════════════
+// ── ADMIN FEEDBACK ──
+// ═══════════════════════════════════════════
+async function loadAdminFeedback() {
+  const list = document.getElementById('admin-feedback-list');
+  if (!list) return;
+  list.innerHTML = '<div class="floader">Chargement…</div>';
+  const { data, error } = await db.from('feedback')
+    .select('*, profiles(pseudo)')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  list.innerHTML = '';
+  if (error) { list.innerHTML = '<div class="fempty">Erreur : ' + error.message + '</div>'; return; }
+  if (!data || data.length === 0) { list.innerHTML = '<div class="fempty">Aucun avis pour l'instant.</div>'; return; }
+
+  // Badge count nouveaux
+  const newCount = data.filter(f => f.status === 'new').length;
+  const badge = document.getElementById('feedback-count');
+  if (badge) { if(newCount>0){badge.textContent=newCount;badge.classList.remove('hidden');}else badge.classList.add('hidden'); }
+
+  const typeLabels = { bug:'🐛 Bug', amelioration:'✨ Amélioration', suggestion:'💡 Suggestion', autre:'💬 Autre' };
+  const statusColors = { new:'var(--a)', read:'var(--m)', done:'var(--mint)', dismissed:'var(--fa)' };
+
+  data.forEach(f => {
+    const el = document.createElement('div');
+    el.className = 'report-card';
+    const pseudo = f.profiles?.pseudo || 'Anonyme';
+    el.innerHTML = `
+      <div class="rc-header">
+        <span class="rc-type rc-type-forum_post">${typeLabels[f.type]||f.type}</span>
+        <span class="rc-status" style="background:rgba(0,0,0,.2);color:${statusColors[f.status]||'var(--m)'}">${f.status}</span>
+      </div>
+      <div class="rc-meta">De <strong>@${esc(pseudo)}</strong>${f.contact?' · Contact : '+esc(f.contact):''} · ${timeAgo(f.created_at)}</div>
+      <div class="rc-content-preview">${esc(f.message)}</div>
+      <div class="rc-actions">
+        ${f.status==='new'?`<button class="rc-btn" onclick="updateFeedbackStatus('${f.id}','read',this)">👁️ Lu</button>`:''}
+        ${f.status!=='done'?`<button class="rc-btn success" onclick="updateFeedbackStatus('${f.id}','done',this)">✓ Traité</button>`:''}
+        ${f.status!=='dismissed'?`<button class="rc-btn danger" onclick="updateFeedbackStatus('${f.id}','dismissed',this)">✕ Ignorer</button>`:''}
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+async function updateFeedbackStatus(id, status, btn) {
+  const { error } = await db.from('feedback').update({ status }).eq('id', id);
+  if (error) { showToast('Erreur : ' + error.message); return; }
+  showToast('✓ Statut mis à jour');
+  loadAdminFeedback();
+}
+
+// ── Patch la fonction checkPendingReports pour inclure le badge feedback ──
+const _origCheckPending = checkPendingReports;
+async function checkPendingReports() {
+  await _origCheckPending();
+  // Check feedback nouveaux
+  try {
+    const { count } = await db.from('feedback').select('*',{count:'exact',head:true}).eq('status','new');
+    const badge = document.getElementById('feedback-count');
+    if (badge) {
+      if(count>0){badge.textContent=count;badge.classList.remove('hidden');}
+      else badge.classList.add('hidden');
+    }
+  } catch(e) {}
 }
 
 registerSW();initTheme();initFontSize();handleOAuthCallback();showTrending();initAuth();loadFeed();
