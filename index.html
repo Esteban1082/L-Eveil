@@ -482,7 +482,7 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 
 
 /* ── MOBILE OVERLAY (swipe sidebar) ── */
-.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:499;backdrop-filter:blur(4px);}
+
 
 /* ── BOTTOM NAV MOBILE ── */
 .mob-nav{
@@ -627,7 +627,7 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
   }
   [data-theme="light"] .sl{background:#F8F4EE !important;}
   .sl.mob-open{left:0 !important;}
-  .mob-overlay{z-index:9998 !important;}
+  
   /* Centre full width */
   .center{max-width:100vw;border-right:none;}
   /* Barre nav bas */
@@ -645,8 +645,6 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 </head>
 <body>
 <!-- ════ MOBILE OVERLAY ════ -->
-<div class="mob-overlay" id="mob-overlay"></div>
-
 <!-- ════ BOTTOM NAV MOBILE ════ -->
 <nav class="mob-nav" id="mob-nav">
   <button class="mob-nav-btn active" id="mob-btn-feed" data-view="feed">
@@ -3484,15 +3482,26 @@ let swipeStartY = 0;
 function openMobSidebar() {
   mobSidebarOpen = true;
   document.querySelector('.sl').classList.add('mob-open');
-  document.getElementById('mob-overlay').style.display = 'block';
-  document.getElementById('mob-overlay').style.zIndex = '9998';
-  document.body.style.overflow = 'hidden';
+  // Écouter le clic dehors avec un court délai pour éviter l'auto-fermeture
+  setTimeout(() => {
+    document.addEventListener('click', outsideClickHandler, { once: true });
+  }, 50);
 }
 function closeMobSidebar() {
   mobSidebarOpen = false;
   document.querySelector('.sl').classList.remove('mob-open');
-  document.getElementById('mob-overlay').style.display = 'none';
-  document.body.style.overflow = '';
+  document.removeEventListener('click', outsideClickHandler);
+}
+function outsideClickHandler(e) {
+  const sl = document.querySelector('.sl');
+  if (sl && !sl.contains(e.target)) {
+    closeMobSidebar();
+  } else if (sl && sl.contains(e.target)) {
+    // Clic à l'intérieur → réécouter
+    setTimeout(() => {
+      document.addEventListener('click', outsideClickHandler, { once: true });
+    }, 50);
+  }
 }
 
 // Swipe depuis le bord gauche → ouvre sidebar
@@ -3516,8 +3525,6 @@ document.addEventListener('touchend', e => {
   }
 }, { passive: true });
 
-// Overlay clic → ferme
-document.getElementById('mob-overlay').addEventListener('click', closeMobSidebar);
 document.getElementById('mob-btn-menu').addEventListener('click', () => {
   if (mobSidebarOpen) closeMobSidebar(); else openMobSidebar();
 });
