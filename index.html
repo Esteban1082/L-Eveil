@@ -2703,7 +2703,7 @@ async function openPostDetail(postId) {
   head.append(av, nameEl, badgeEl, timeEl);
 
   const contentEl = document.createElement('div');
-  contentEl.className = 'pcontent'; contentEl.id = 'cont-' + postId;
+  contentEl.className = 'pcontent'; contentEl.id = 'detail-cont-' + postId;
   contentEl.innerHTML = renderContent(po.content);
   contentEl.addEventListener('click', e => { if (e.target.classList.contains('ht')) filterByTag(e.target.dataset.tag); });
 
@@ -2742,7 +2742,7 @@ async function openPostDetail(postId) {
   acts.append(likeBtn, saveBtn, shareBtn);
 
   // Traduction dans la vue détail
-  addTranslateBtn({...po, id: postId}, acts);
+  addTranslateBtnEl({...po, id: postId}, acts, contentEl);
 
   if (isOwn) {
     const editBtn = document.createElement('button'); editBtn.className = 'pa own-act'; editBtn.textContent = '✏️ Modifier';
@@ -3787,6 +3787,7 @@ document.getElementById('btn-feedback-submit').addEventListener('click', async (
     console.error('Feedback error:', error);
   } else {
     okEl.style.display = 'block';
+    showToast('💡 Avis envoyé — merci ! 🌙');
     document.getElementById('feedback-text').value = '';
     document.getElementById('feedback-contact').value = '';
     FEEDBACK_TYPE = null;
@@ -3833,8 +3834,19 @@ async function translateText(text, targetLang) {
   }
 }
 
-// Ajouter bouton traduction sur un post
+// addTranslateBtnEl : version avec élément content passé directement (vue détail)
+function addTranslateBtnEl(p, acts, contEl) {
+  _addTranslateBtnCore(p, acts, contEl);
+}
+
+// addTranslateBtn : version standard qui trouve l'élément par ID (feed)
 function addTranslateBtn(p, acts) {
+  const contEl = document.getElementById('cont-' + p.id);
+  _addTranslateBtnCore(p, acts, contEl);
+}
+
+// Ajouter bouton traduction sur un post
+function _addTranslateBtnCore(p, acts, contEl) {
   // Pas de bouton si même langue ou post de démo
   if (String(p.id).startsWith('d')) return;
   const targetLang = USER_LANG === 'fr' ? 'en' : 'fr';
@@ -3850,26 +3862,43 @@ function addTranslateBtn(p, acts) {
 
   transBtn.addEventListener('click', async () => {
     if (translated && transEl) {
-      // Toggle : masquer/afficher
       transEl.style.display = transEl.style.display === 'none' ? '' : 'none';
       transBtn.innerHTML = transEl.style.display === 'none' ? `🌐 <span>${langLabel}</span>` : `🌐 <span>↩</span>`;
       return;
     }
     transBtn.innerHTML = '⏳';
     transBtn.disabled = true;
-    const result = await translateText(p.content, targetLang);
+    // Traduire par chunks si texte long (limite API 500 chars)
+    const text = p.content || '';
+    let result;
+    if (text.length <= 490) {
+      result = await translateText(text, targetLang);
+    } else {
+      // Couper en phrases et traduire par blocs
+      const chunks = [];
+      let current = '';
+      for (const sentence of text.split(/(?<=[.!?])\s+/)) {
+        if ((current + sentence).length > 490) {
+          if (current) chunks.push(current.trim());
+          current = sentence;
+        } else {
+          current += (current ? ' ' : '') + sentence;
+        }
+      }
+      if (current) chunks.push(current.trim());
+      const results = await Promise.all(chunks.map(c => translateText(c, targetLang)));
+      result = results.filter(Boolean).join(' ') || null;
+    }
     transBtn.disabled = false;
     if (!result) { showToast('Traduction indisponible.'); transBtn.innerHTML = `🌐 <span>${langLabel}</span>`; return; }
-    // Insérer la traduction sous le contenu
-    const cont = document.getElementById('cont-' + p.id);
-    if (!cont) return;
+    if (!contEl) { showToast('Élément introuvable.'); return; }
     transEl = document.createElement('div');
     transEl.className = 'translated-text';
     transEl.textContent = result;
     const credit = document.createElement('div');
     credit.className = 'translate-credit';
     credit.textContent = `Traduit en ${targetLang.toUpperCase()} via MyMemory`;
-    cont.after(transEl);
+    contEl.after(transEl);
     transEl.after(credit);
     translated = true;
     transBtn.innerHTML = `🌐 <span>↩</span>`;

@@ -2,7 +2,7 @@
 // L'ÉVEIL — Service Worker v1.1
 // ============================================================
 
-const CACHE = 'leveil-v1';
+const CACHE = 'leveil-v2';
 const ASSETS = ['/'];
 
 // ── INSTALL ──
