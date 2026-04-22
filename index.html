@@ -611,11 +611,11 @@ button{cursor:pointer;font-family:var(--f);}input,textarea,select{font-family:va
 @media(max-width:720px){
   /* ── Sidebar masquée, ouverte via swipe ── */
   .sl{
-    position:fixed;top:0;left:0;bottom:0;z-index:500;
+    position:fixed;top:0;left:0;bottom:0;z-index:501;
     width:280px;padding:1.25rem 1rem;
     transform:translateX(-100%);
     transition:transform .3s cubic-bezier(.23,1,.32,1);
-    box-shadow:4px 0 32px rgba(0,0,0,.4);
+    box-shadow:4px 0 32px rgba(0,0,0,.5);
   }
   .sl.mob-open{transform:translateX(0);}
   /* Centre prend toute la largeur */
