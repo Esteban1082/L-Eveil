@@ -2016,7 +2016,7 @@ function openJournalDetail(e){
       const parts=['📖 '+e.title];
       if(e.method_used)parts.push('🧭 Méthode : '+e.method_used);
       if(e.success)parts.push('✓ SHC réussie !');
-      parts.push('',e.content.slice(0,400)+(e.content.length>400?'…':''),'','#journalonirique #shc');
+      parts.push('',e.content,'','#journalonirique #shc');
       const pc=parts.join('\n');
       const r2=await db.from('forum_posts').insert({user_id:ME.id,category:'shc',title:e.title.slice(0,60),content:pc}).select('id').single();
       if(!r2.error&&r2.data){
@@ -2080,7 +2080,7 @@ async function saveJournal(){
       const parts=['\ud83d\udcd6 '+title];
       if(method)parts.push('\ud83e\udded M\xe9thode : '+method);
       if(success)parts.push('\u2713 SHC r\xe9ussie !');
-      parts.push('',content2.slice(0,400)+(content2.length>400?'\u2026':''),'','#journalonirique #shc');
+      parts.push('',content2,'','#journalonirique #shc');
       const pc=parts.join('\n');
       const r2=await db.from('forum_posts').insert({user_id:ME.id,category:'shc',title:title.slice(0,60),content:pc}).select('id').single();
       if(r2.error){console.warn('Post feed:',r2.error.message);}
@@ -2715,6 +2715,9 @@ async function openPostDetail(postId) {
   shareBtn.addEventListener('click', () => sharePost(po.content));
 
   acts.append(likeBtn, saveBtn, shareBtn);
+
+  // Traduction dans la vue détail
+  addTranslateBtn({...po, id: postId}, acts);
 
   if (isOwn) {
     const editBtn = document.createElement('button'); editBtn.className = 'pa own-act'; editBtn.textContent = '✏️ Modifier';
@@ -3741,7 +3744,7 @@ document.getElementById('btn-feedback-submit').addEventListener('click', async (
   const contact = document.getElementById('feedback-contact').value.trim();
   const errEl = document.getElementById('feedback-err');
   const okEl = document.getElementById('feedback-ok');
-  errEl.classList.add('hidden'); okEl.classList.add('hidden');
+  errEl.style.display = 'none'; okEl.style.display = 'none';
   if (!FEEDBACK_TYPE) { errEl.textContent = 'Choisis un type de retour.'; errEl.classList.remove('hidden'); return; }
   if (!msg || msg.length < 10) { errEl.textContent = 'Message trop court (10 min).'; errEl.classList.remove('hidden'); return; }
   const btn = document.getElementById('btn-feedback-submit');
@@ -3753,14 +3756,17 @@ document.getElementById('btn-feedback-submit').addEventListener('click', async (
     contact: contact || null
   });
   btn.disabled = false; btn.textContent = 'Envoyer mon avis';
-  if (error) { errEl.textContent = 'Erreur : ' + error.message; errEl.classList.remove('hidden'); }
-  else {
-    okEl.classList.remove('hidden');
+  if (error) {
+    errEl.textContent = 'Erreur : ' + error.message;
+    errEl.style.display = 'block';
+    console.error('Feedback error:', error);
+  } else {
+    okEl.style.display = 'block';
     document.getElementById('feedback-text').value = '';
     document.getElementById('feedback-contact').value = '';
     FEEDBACK_TYPE = null;
     document.querySelectorAll('.ftype').forEach(b => b.classList.remove('sel'));
-    setTimeout(() => closeModal('feedback-modal'), 2500);
+    setTimeout(() => { closeModal('feedback-modal'); okEl.style.display = 'none'; }, 2500);
   }
 });
 
